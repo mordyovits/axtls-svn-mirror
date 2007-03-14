@@ -30,7 +30,7 @@ static const char * index_file = "index.html";
 
 static int special_read(struct connstruct *cn, void *buf, size_t count);
 static int special_write(struct connstruct *cn, 
-                                        const uint8_t *buf, size_t count);
+                                        const char *buf, size_t count);
 static void send_error(struct connstruct *cn, int err);
 static int hexit(char c);
 static void urldecode(char *buf);
@@ -40,7 +40,7 @@ static int sanitizehost(char *buf);
 static int htaccess_check(struct connstruct *cn);
 
 #if defined(CONFIG_HTTP_DIRECTORIES)
-static void urlencode(const uint8_t *s, uint8_t *t);
+static void urlencode(const uint8_t *s, char *t);
 static void procdirlisting(struct connstruct *cn);
 #endif
 #if defined(CONFIG_HTTP_HAS_CGI)
@@ -121,7 +121,7 @@ static int procheadelem(struct connstruct *cn, char *buf)
     {
         int size;
         if (base64_decode(&value[6], strlen(&value[6]), 
-                                        cn->authorization, &size))
+                                        (uint8_t *)cn->authorization, &size))
             cn->authorization[0] = 0;   /* error */
         else
             cn->authorization[size] = 0;
@@ -225,7 +225,7 @@ void procdodir(struct connstruct *cn)
         if (isdir(buf))
             strcat(file, "/");
 
-        urlencode(file, encbuf);
+        urlencode((uint8_t *)file, encbuf);
         snprintf(buf, sizeof(buf), "<a href=\"%s%s\">%s</a><br />\n",
                 cn->filereq, encbuf, file);
     } while (special_write(cn, buf, strlen(buf)));
@@ -233,12 +233,10 @@ void procdodir(struct connstruct *cn)
 
 /* Encode funny chars -> %xx in newly allocated storage */
 /* (preserves '/' !) */
-static void urlencode(const uint8_t *s, uint8_t *t) 
+static void urlencode(const uint8_t *s, char *t) 
 {
     const uint8_t *p = s;
-    uint8_t *tp;
-
-    tp = t;
+    char *tp = t;
 
     for (; *p; p++) 
     {
@@ -513,7 +511,7 @@ void procsendfile(struct connstruct *cn)
 }
 
 static int special_write(struct connstruct *cn, 
-                                        const uint8_t *buf, size_t count)
+                                        const char *buf, size_t count)
 {
     if (cn->is_ssl)
     {
@@ -783,7 +781,12 @@ static int hexit(char c)
 static void buildactualfile(struct connstruct *cn)
 {
     char *cp;
+
+#ifdef CONFIG_HTTP_USE_CHROOT
     snprintf(cn->actualfile, MAXREQUESTLENGTH, "%s", cn->filereq);
+#else
+    snprintf(cn->actualfile, MAXREQUESTLENGTH, ".%s", cn->filereq);
+#endif
 
 #ifndef WIN32
     /* Add directory slash if not there */
@@ -911,7 +914,7 @@ static int check_digest(char *salt, const char *msg_passwd)
     /* very simple MD5 crypt algorithm, but then the salt we use is large */
     MD5Init(&ctx);
     MD5Update(&ctx, b256_salt, salt_size);           /* process the salt */
-    MD5Update(&ctx, msg_passwd, strlen(msg_passwd)); /* process the password */
+    MD5Update(&ctx, (uint8_t *)msg_passwd, strlen(msg_passwd)); 
     MD5Final(&ctx, md5_result);
     return memcmp(md5_result, real_passwd, MD5_SIZE);/* 0 = ok */
 }

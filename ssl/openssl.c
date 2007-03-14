@@ -28,7 +28,7 @@
 
 #ifdef CONFIG_OPENSSL_COMPATIBLE
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <stdarg.h>
 #include "ssl.h"
 
@@ -192,11 +192,13 @@ void BIO_printf(FILE *f, const char *format, ...)
     va_end(ap);
 }
 
-void* BIO_s_null(void) {}
+void* BIO_s_null(void) { return NULL; }
 FILE *BIO_new(bio_func_type_t func)
 {
     if (func == BIO_s_null)
         return fopen("/dev/null", "r");
+    else
+        return NULL;
 }
 
 FILE *BIO_new_fp(FILE *stream, int close_flag) { return stream; }

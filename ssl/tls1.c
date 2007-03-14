@@ -1246,6 +1246,7 @@ int basic_read(SSL *ssl, uint8_t **in_data)
                     *in_data = ssl->bm_data;   /* point to the work buffer */
                     (*in_data)[read_len] = 0;  /* null terminate just in case */
                 }
+
                 ret = read_len;
                 break;
 

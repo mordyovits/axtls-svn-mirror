@@ -25,12 +25,12 @@
 #define HAVE_IPV6
 #endif
 
-#define MAXREQUESTLENGTH 256
-#define MAXCGIARGS 100
-#define BLOCKSIZE 4096
+#define MAXREQUESTLENGTH                    256
+#define MAXCGIARGS                          100
+#define BLOCKSIZE                           4096
 
-#define INITIAL_CONNECTION_SLOTS 10
-#define CONFIG_HTTP_DEFAULT_SSL_OPTIONS   0
+#define INITIAL_CONNECTION_SLOTS            10
+#define CONFIG_HTTP_DEFAULT_SSL_OPTIONS     0
 
 #define STATE_WANT_TO_READ_HEAD  1
 #define STATE_WANT_TO_SEND_HEAD  2

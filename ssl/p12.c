@@ -153,7 +153,7 @@ static char *make_uni_pass(const char *password, int *uni_pass_len)
         password = "";
     }
 
-    uni_pass = (uint8_t *)malloc((strlen(password)+1)*2);
+    uni_pass = (char *)malloc((strlen(password)+1)*2);
 
     /* modify the password into a unicode version */
     for (i = 0; i < (int)strlen(password); i++)
@@ -225,8 +225,8 @@ int pkcs12_decode(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj, const char *password)
               auth_safes_end, auth_safes_len, key_offset, offset = 0;
     int all_certs = 0;
     uint8_t *version = NULL, *auth_safes = NULL, *cert, *orig_mac;
-    char key[SHA1_SIZE];
-    char mac[SHA1_SIZE];
+    uint8_t key[SHA1_SIZE];
+    uint8_t mac[SHA1_SIZE];
     const uint8_t *salt;
     int uni_pass_len, ret;
     int error_code = SSL_ERROR_NOT_SUPPORTED;

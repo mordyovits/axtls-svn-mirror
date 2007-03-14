@@ -67,7 +67,7 @@ EXP_FUNC int STDCALL ssl_obj_load(SSL_CTX *ssl_ctx, int obj_type,
     }
 
     /* is the file a PEM file? */
-    if (strncmp(ssl_obj->buf, begin, strlen(begin)) == 0)
+    if (strncmp((char *)ssl_obj->buf, begin, strlen(begin)) == 0)
     {
 #ifdef CONFIG_SSL_HAS_PEM
         ret = ssl_obj_PEM_load(ssl_ctx, ssl_obj, password);
@@ -195,12 +195,12 @@ static const char * const aes_str[2] =
  * Take a base64 blob of data and decrypt it (using AES) into its 
  * proper ASN.1 form.
  */
-static int pem_decrypt(const uint8_t *where, const uint8_t *end,
+static int pem_decrypt(const char *where, const char *end,
                         const char *password, SSLObjLoader *ssl_obj)
 {
     int ret = -1;
     int is_aes_256 = 0;
-    uint8_t *start = NULL;
+    char *start = NULL;
     uint8_t iv[IV_SIZE];
     int i, pem_size;
     MD5_CTX md5_ctx;
@@ -215,13 +215,11 @@ static int pem_decrypt(const uint8_t *where, const uint8_t *end,
         goto error;
     }
 
-    if ((start = (uint8_t *)strstr(
-                    (const char *)where, aes_str[0])))          /* AES128? */
+    if ((start = strstr((const char *)where, aes_str[0])))         /* AES128? */
     {
         start += strlen(aes_str[0]);
     }
-    else if ((start = (uint8_t *)strstr(
-                    (const char *)where, aes_str[1])))          /* AES256? */
+    else if ((start = strstr((const char *)where, aes_str[1])))    /* AES256? */
     {
         is_aes_256 = 1;
         start += strlen(aes_str[1]);
@@ -237,7 +235,7 @@ static int pem_decrypt(const uint8_t *where, const uint8_t *end,
     /* convert from hex to binary - assumes uppercase hex */
     for (i = 0; i < IV_SIZE; i++)
     {
-        uint8_t c = *start++ - '0';
+        char c = *start++ - '0';
         iv[i] = (c > 9 ? c + '0' - 'A' + 10 : c) << 4;
         c = *start++ - '0';
         iv[i] += (c > 9 ? c + '0' - 'A' + 10 : c);
@@ -279,18 +277,18 @@ error:
 /**
  * Take a base64 blob of data and turn it into its proper ASN.1 form.
  */
-static int new_pem_obj(SSL_CTX *ssl_ctx, uint8_t *where, 
+static int new_pem_obj(SSL_CTX *ssl_ctx, char *where, 
                     int remain, const char *password)
 {
     int ret = SSL_OK;
     SSLObjLoader *ssl_obj = NULL;
     int i, pem_size, obj_type;
-    uint8_t *start = NULL, *end = NULL;
+    char *start = NULL, *end = NULL;
 
     for (i = 0; i < NUM_PEM_TYPES; i++)
     {
-        if ((start = (uint8_t *)strstr((const char *)where, begins[i])) &&
-                (end = (uint8_t *)strstr((const char *)where, ends[i])))
+        if ((start = strstr(where, begins[i])) &&
+                (end = strstr(where, ends[i])))
         {
             remain -= (int)(end-start);
             start += strlen(begins[i]);
@@ -302,8 +300,8 @@ static int new_pem_obj(SSL_CTX *ssl_ctx, uint8_t *where,
             ssl_obj->buf = (uint8_t *)calloc(1, pem_size);
 
             if (i == IS_RSA_PRIVATE_KEY && 
-                        strstr((const char *)start, "Proc-Type:") && 
-                        strstr((const char *)start, "4,ENCRYPTED"))
+                        strstr(start, "Proc-Type:") && 
+                        strstr(start, "4,ENCRYPTED"))
             {
                 /* check for encrypted PEM file */
                 if (pem_decrypt(start, end, password, ssl_obj) < 0)
@@ -365,13 +363,13 @@ error:
 static int ssl_obj_PEM_load(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj, 
                                         const char *password)
 {
-    uint8_t *start;
+    char *start;
 
     /* add a null terminator */
     ssl_obj->len++;
     ssl_obj->buf = (uint8_t *)realloc(ssl_obj->buf, ssl_obj->len);
     ssl_obj->buf[ssl_obj->len-1] = 0;
-    start = ssl_obj->buf;
+    start = (char *)ssl_obj->buf;
     return new_pem_obj(ssl_ctx, start, ssl_obj->len, password);
 }
 #endif /* CONFIG_SSL_HAS_PEM */

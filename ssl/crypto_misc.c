@@ -95,8 +95,16 @@ EXP_FUNC void STDCALL RNG_initialize(const uint8_t *seed_buf, int size)
         if (!CryptAcquireContext(&gCryptProv, 
                           NULL, NULL, PROV_RSA_FULL, 0))
         {
-            printf("%s CryptoLib %x", unsupported_str, GetLastError());
-            exit(1);
+            if (GetLastError() == NTE_BAD_KEYSET &&
+                    !CryptAcquireContext(&gCryptProv, 
+                           NULL, 
+                           NULL, 
+                           PROV_RSA_FULL, 
+                           CRYPT_NEWKEYSET))
+            {
+                printf("CryptoLib: %x\n", unsupported_str, GetLastError());
+                exit(1);
+            }
         }
 #else   
         /* help seed with the user's private key - this is a number that 

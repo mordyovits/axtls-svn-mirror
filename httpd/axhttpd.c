@@ -32,9 +32,7 @@ static void addtoservers(int sd);
 static int openlistener(int port);
 static void handlenewconnection(int listenfd, int is_ssl);
 static void addconnection(int sd, char *ip, int is_ssl);
-#if defined(CONFIG_HTTP_PERM_CHECK)
-static void procpermcheck(const char *pathtocheck);
-#endif
+static void ax_chdir(void);
 
 #if defined(CONFIG_HTTP_HAS_CGI)
 struct cgiextstruct *cgiexts;
@@ -101,7 +99,6 @@ static void die(int sigtype)
 
 int main(int argc, char *argv[]) 
 {
-    static char *webroot = CONFIG_HTTP_WEBROOT;
     fd_set rfds, wfds;
     struct connstruct *tp, *to;
     struct serverstruct *sp;
@@ -162,9 +159,6 @@ int main(int argc, char *argv[])
                                 CONFIG_HTTP_SESSION_CACHE_SIZE);
     servers->is_ssl = 1;
 
-#if defined(CONFIG_HTTP_PERM_CHECK) 
-    procpermcheck(webroot);
-#endif
 #if defined(CONFIG_HTTP_HAS_CGI)
     addcgiext(CONFIG_HTTP_CGI_EXTENSIONS);
 #endif
@@ -174,25 +168,19 @@ int main(int argc, char *argv[])
     TTY_FLUSH();
 #endif
 
-    /* change to webroot for better security */
-    if (chroot(webroot))
-    {
-#ifdef CONFIG_HTTP_VERBOSE
-        fprintf(stderr, "'%s' is not a directory\n", webroot);
-#endif
-        exit(1);
-    }
+    ax_chdir();
 
-#ifndef WIN32
+#ifndef WIN32 
+#ifdef CONFIG_HTTP_CHANGE_UID
     setgid(32767);
     setuid(32767);
 #endif
-
-#if defined(CONFIG_HTTP_IS_DAEMON)
+#ifdef CONFIG_HTTP_IS_DAEMON
     if (fork() > 0)  /* parent will die */
         exit(0);
 
     setsid();
+#endif
 #endif
 
     /* main loop */
@@ -333,107 +321,6 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-#if defined(CONFIG_HTTP_PERM_CHECK)
-static void procpermcheck(const char *pathtocheck) 
-{
-    char thepath[MAXREQUESTLENGTH];
-#ifndef WIN32
-    DIR *tpdir;
-    struct dirent *dp;
-
-    tpdir = opendir(pathtocheck);
-
-    if (tpdir == NULL) 
-    {
-        printf("WARNING: UID (%d) is unable to read %s\n", 
-                (int)getuid(), pathtocheck);
-        TTY_FLUSH();
-        return;
-    }
-
-    while ((dp = readdir(tpdir))) 
-    {
-        if (strcmp(dp->d_name, "..") == 0)
-            continue;
-
-        if (strcmp(dp->d_name, ".") == 0)
-            continue;
-
-        snprintf(thepath, sizeof(thepath), "%s/%s", pathtocheck, dp->d_name);
-
-        if (isdir(thepath))
-        {
-            procpermcheck(thepath);
-            continue;
-        }
-
-        if (access(thepath, R_OK) != 0)
-            printf("WARNING: UID (%d) is unable to read %s\n",
-                                (int)getuid(), thepath);
-
-        if (access(thepath, W_OK) == 0)
-            printf("SECURITY: UID (%d) is ABLE TO WRITE TO %s\n",
-                                (int)getuid(), thepath);
-
-        TTY_FLUSH();
-    }
-
-    closedir(tpdir);
-#else   /* Win32 */
-    HANDLE tpdir;
-    WIN32_FIND_DATA file_data;
-    struct stat st;
-    char buf2[1024];
-
-    strcpy(buf2, pathtocheck);
-    strcat(buf2, "\\*");
-    tpdir = FindFirstFile(buf2, &file_data);
-
-    if (tpdir == INVALID_HANDLE_VALUE) 
-    {
-        printf("WARNING: unable to read %s\n", buf2);
-        TTY_FLUSH();
-        return;
-    }
-
-    while (FindNextFile(tpdir, &file_data)) 
-    {
-        if (strcmp(file_data.cFileName, "..") == 0) 
-            continue;
-
-        if (strcmp(file_data.cFileName, ".") == 0) 
-            continue;
-
-        snprintf(thepath, sizeof(thepath), "%s\\%s", 
-                pathtocheck, file_data.cFileName);
-
-        if (isdir(thepath)) 
-        {
-            procpermcheck(thepath);
-            continue;
-        }
-
-        if (stat(thepath, &st) >= 0) 
-        {
-            if ((st.st_mode & _S_IREAD) == 0) 
-            {
-                printf("WARNING: unable to read %s\n", thepath);
-                TTY_FLUSH();
-            }
-
-            if (st.st_mode & _S_IWRITE) 
-            {
-                printf("SECURITY: ABLE TO WRITE TO %s\n", thepath);
-                TTY_FLUSH();
-            }
-        }
-    }
-
-    FindClose(tpdir);
-#endif
-}
-#endif  /* CONFIG_HTTP_PERM_CHECK */
-
 #if defined(CONFIG_HTTP_HAS_CGI)
 static void addcgiext(const char *cgi_exts)
 {
@@ -485,7 +372,7 @@ static void handlenewconnection(int listenfd, int is_ssl)
 static void handlenewconnection(int listenfd, int is_ssl) 
 {
     struct sockaddr_in their_addr;
-    int tp = sizeof(struct sockaddr_in);
+    socklen_t tp = sizeof(struct sockaddr_in);
     int connfd = accept(listenfd, (struct sockaddr *)&their_addr, &tp);
     addconnection(connfd, inet_ntoa(their_addr.sin_addr), is_ssl);
 }
@@ -659,3 +546,22 @@ void removeconnection(struct connstruct *cn)
 #endif
 }
 
+/*
+ * Change directories one way or the other.
+ */
+static void ax_chdir(void)
+{
+    static char *webroot = CONFIG_HTTP_WEBROOT;
+
+#if defined(WIN32) || !defined(CONFIG_HTTP_USE_CHROOT)
+    if (chdir(webroot))
+#else   /* use chroot() instead */
+    if (chroot(webroot))
+#endif
+    {
+#ifdef CONFIG_HTTP_VERBOSE
+        fprintf(stderr, "'%s' is not a directory\n", webroot);
+#endif
+        exit(1);
+    }
+}

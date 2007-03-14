@@ -135,7 +135,7 @@ config CONFIG_SSL_ENABLE_V23_HANDSHAKE
 
         Since this feature takes a kB or so, this feature may be disabled - at
         the risk of making it incompatible with some browsers (IE6 is ok,
-        Firefox/Opera may be a problem - see Mozilla bug report 148876).
+        Firefox 1.5 and below use it).
 
         Disable if backwards compatibility is not an issue (i.e. the client is
         always using TLS1.0)

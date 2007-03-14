@@ -88,7 +88,8 @@ static void do_server(int argc, char *argv[])
     uint32_t options = SSL_DISPLAY_CERTS;
     int client_fd;
     SSL_CTX *ssl_ctx;
-    int server_fd, client_len, res = 0;
+    int server_fd, res = 0;
+    socklen_t client_len;
 #ifndef CONFIG_SSL_SKELETON_MODE
     char *private_key_file = NULL;
     const char *password = NULL;

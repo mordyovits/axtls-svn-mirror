@@ -107,14 +107,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    RNG_initialize(pw, sizeof(pw));
+    RNG_initialize((uint8_t *)pw, sizeof(pw));
     get_random(MD5_SIZE, md5_salt);
     RNG_terminate();
     base64_encode(md5_salt, MD5_SIZE, b64_salt, sizeof(b64_salt));
 
     MD5Init(&ctx);
     MD5Update(&ctx, md5_salt, MD5_SIZE);
-    MD5Update(&ctx, pw, strlen(pw));
+    MD5Update(&ctx, (uint8_t *)pw, strlen(pw));
     MD5Final(&ctx, md5_pass);
     base64_encode(md5_pass, MD5_SIZE, b64_pass, sizeof(b64_pass));
 

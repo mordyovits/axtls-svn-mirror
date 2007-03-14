@@ -80,12 +80,25 @@ config CONFIG_HTTP_HAS_AUTHORIZATION
     help
         Pages/directories can have passwords associated with them.
 
-config CONFIG_HTTP_PERM_CHECK
-    bool "Permissions Check"
+config CONFIG_HTTP_USE_CHROOT
+    bool "Use chroot()"
     default n
+    depends on !CONFIG_PLATFORM_WIN32
     help
-        Enable permissions checking on the directories before reading the
-        files in them.
+        Use chroot() to switch directories with a certain degree of
+        protection. However access to /bin and /lib have to replaced with
+        duplicate binaries.
+        
+        This feature is normally disabled.
+
+config CONFIG_HTTP_CHANGE_UID
+    bool "Change UID"
+    default n
+    depends on !CONFIG_PLATFORM_WIN32
+    help
+        Call setgid()/setuid() to disable access to protected files.
+        
+        This feature is normally disabled.
 
 config CONFIG_HTTP_HAS_IPV6
     bool "Enable IPv6"
