@@ -439,10 +439,11 @@ static int send_client_key_xchg(SSL *ssl)
     premaster_secret[1] = 0x02; // N octets long PSK
     premaster_secret[2] = 0x00;
     premaster_secret[3] = 0x00;
-    premaster_secret[4] = 0x02; // N octets long PSK
-    premaster_secret[5] = 0x66;
-    premaster_secret[6] = 0x66; // hardcoded PSK
-    premaster_secret_len = 7;
+    premaster_secret[4] = 0x00;
+    premaster_secret[5] = 0x02; // N octets long PSK
+    premaster_secret[6] = 0x66;
+    premaster_secret[7] = 0x66; // hardcoded PSK
+    premaster_secret_len = 8;
     #endif
 
     generate_master_secret(ssl, premaster_secret, premaster_secret_len);
