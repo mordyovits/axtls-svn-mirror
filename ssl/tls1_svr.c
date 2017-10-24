@@ -406,7 +406,7 @@ static int process_client_key_xchg(SSL *ssl)
         /* and continue - will die eventually when checking the mac */
     }
 
-    generate_master_secret(ssl, premaster_secret);
+    generate_master_secret(ssl, premaster_secret, premaster_size);
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     ssl->next_state = IS_SET_SSL_FLAG(SSL_CLIENT_AUTHENTICATION) ?  

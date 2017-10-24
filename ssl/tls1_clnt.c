@@ -110,6 +110,7 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
         case HS_SERVER_HELLO_DONE:
             if ((ret = process_server_hello_done(ssl)) == SSL_OK)
             {
+                #ifndef CONFIG_SSL_NO_CERTS
                 if (IS_SET_SSL_FLAG(SSL_HAS_CERT_REQ))
                 {
                     if ((ret = send_certificate(ssl)) == SSL_OK &&
@@ -122,6 +123,9 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
                 {
                     ret = send_client_key_xchg(ssl);
                 }
+                #else /* CONFIG_SSL_NO_CERTS */
+                ret = send_client_key_xchg(ssl);
+                #endif
 
                 if (ret == SSL_OK && 
                      (ret = send_change_cipher_spec(ssl)) == SSL_OK)
@@ -357,9 +361,13 @@ static int process_server_hello(SSL *ssl)
 
     /* get the real cipher we are using - ignore MSB */
     ssl->cipher = buf[++offset];
+    #ifndef CONFIG_SSL_NO_CERTS
     ssl->next_state = IS_SET_SSL_FLAG(SSL_SESSION_RESUME) ? 
                                         HS_FINISHED : HS_CERTIFICATE;
-
+    #else /* CONFIG_SSL_NO_CERTS */
+    ssl->next_state = IS_SET_SSL_FLAG(SSL_SESSION_RESUME) ? 
+                                        HS_FINISHED : HS_SERVER_HELLO_DONE;
+    #endif
     offset += 2; // ignore compression
     PARANOIA_CHECK(pkt_size, offset);
 
@@ -386,12 +394,19 @@ static int process_server_hello_done(SSL *ssl)
 static int send_client_key_xchg(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
+    #ifndef CONFIG_SSL_NO_CERTS
     uint8_t premaster_secret[SSL_SECRET_SIZE];
+    #else /* CONFIG_SSL_NO_CERTS */
+    uint8_t premaster_secret[7]; // MOXXX hardcoded psk length
+    #endif
     int enc_secret_size = -1;
+    int cke_size = -1;
+    int premaster_secret_len = -1;
 
     buf[0] = HS_CLIENT_KEY_XCHG;
     buf[1] = 0;
 
+    #ifndef CONFIG_SSL_NO_CERTS
     // spec says client must use the what is initially negotiated -
     // and this is our current version
     premaster_secret[0] = 0x03; 
@@ -411,9 +426,27 @@ static int send_client_key_xchg(SSL *ssl)
     buf[3] = (enc_secret_size + 2) & 0xff;
     buf[4] = enc_secret_size >> 8;
     buf[5] = enc_secret_size & 0xff;
+    cke_size = enc_secret_size+6
+    premaster_secret_len = 48
+    #else /* CONFIG_SSL_NO_CERTS */
+    buf[2] = 0x00;
+    buf[3] = 17; // two byte identity
+    buf[4] = 0x00;
+    buf[5] = 15;
+    memcpy(&buf[6], "Client_identity", 15);
+    cke_size = 21;
+    premaster_secret[0] = 0x00;
+    premaster_secret[1] = 0x02; // N octets long PSK
+    premaster_secret[2] = 0x00;
+    premaster_secret[3] = 0x00;
+    premaster_secret[4] = 0x02; // N octets long PSK
+    premaster_secret[5] = 0x66;
+    premaster_secret[6] = 0x66; // hardcoded PSK
+    premaster_secret_len = 7;
+    #endif
 
-    generate_master_secret(ssl, premaster_secret);
-    return send_packet(ssl, PT_HANDSHAKE_PROTOCOL, NULL, enc_secret_size+6);
+    generate_master_secret(ssl, premaster_secret, premaster_secret_len);
+    return send_packet(ssl, PT_HANDSHAKE_PROTOCOL, NULL, cke_size);
 }
 
 /*

@@ -80,7 +80,11 @@ extern "C" {
 #define RT_EXTRA                    1024
 #define BM_RECORD_OFFSET            5
 
+#ifndef CONFIG_SSL_NO_CERTS
 #define NUM_PROTOCOLS               4
+#else /* CONFIG_SSL_NO_CERTS */
+#define NUM_PROTOCOLS               2
+#endif
 
 #define MAX_SIG_ALGORITHMS          4
 #define SIG_ALG_SHA1                2
@@ -271,7 +275,7 @@ int send_certificate(SSL *ssl);
 int basic_read(SSL *ssl, uint8_t **in_data);
 int send_change_cipher_spec(SSL *ssl);
 int finished_digest(SSL *ssl, const char *label, uint8_t *digest);
-void generate_master_secret(SSL *ssl, const uint8_t *premaster_secret);
+void generate_master_secret(SSL *ssl, const uint8_t *premaster_secret, const int premaster_secret_len);
 void add_packet(SSL *ssl, const uint8_t *pkt, int len);
 int add_cert(SSL_CTX *ssl_ctx, const uint8_t *buf, int len);
 int add_private_key(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj);

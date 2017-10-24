@@ -136,6 +136,8 @@ extern "C" {
 #define SSL_AES256_SHA                          0x35
 #define SSL_AES128_SHA256                       0x3c
 #define SSL_AES256_SHA256                       0x3d
+#define SSL_PSK_AES128_SHA                      0x8c
+#define SSL_PSK_AES256_SHA                      0x8d
 
 /* build mode ids' */
 #define SSL_BUILD_SKELETON_MODE                 0x01

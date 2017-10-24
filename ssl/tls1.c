@@ -62,6 +62,7 @@ static int check_certificate_chain(SSL *ssl);
 static void session_free(SSL_SESSION *ssl_sessions[], int sess_index);
 #endif
 
+#ifndef CONFIG_SSL_NO_CERTS
 const uint8_t ssl_prot_prefs[NUM_PROTOCOLS] = 
 #ifdef CONFIG_SSL_PROT_LOW                  /* low security, fast speed */
 { SSL_AES128_SHA, SSL_AES128_SHA256, SSL_AES256_SHA, SSL_AES256_SHA256 };
@@ -70,10 +71,15 @@ const uint8_t ssl_prot_prefs[NUM_PROTOCOLS] =
 #else /* CONFIG_SSL_PROT_HIGH */            /* high security, low speed */
 { SSL_AES256_SHA256, SSL_AES128_SHA256, SSL_AES256_SHA, SSL_AES128_SHA };
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+const uint8_t ssl_prot_prefs[NUM_PROTOCOLS] = 
+{ SSL_PSK_AES256_SHA, SSL_PSK_AES128_SHA };
+#endif
 
 /**
  * The cipher map containing all the essentials for each cipher.
  */
+#ifndef CONFIG_SSL_NO_CERTS
 static const cipher_info_t cipher_info[NUM_PROTOCOLS] = 
 {
     {   /* AES128-SHA */
@@ -121,6 +127,33 @@ static const cipher_info_t cipher_info[NUM_PROTOCOLS] =
         (crypt_func)AES_cbc_decrypt     /* decrypt */
     }
 };
+#else /* CONFIG_SSL_NO_CERTS */
+static const cipher_info_t cipher_info[NUM_PROTOCOLS] = 
+{
+    {   /* PSK-AES128-SHA */
+        SSL_PSK_AES128_SHA,                 /* PSK-AES128-SHA */
+        16,                             /* key size */
+        16,                             /* iv size */ 
+        16,                             /* block padding size */
+        SHA1_SIZE,                      /* digest size */
+        2*(SHA1_SIZE+16+16),            /* key block size */
+        hmac_sha1,                      /* hmac algorithm */
+        (crypt_func)AES_cbc_encrypt,    /* encrypt */
+        (crypt_func)AES_cbc_decrypt     /* decrypt */
+    },
+    {   /* PSK-AES256-SHA */
+        SSL_PSK_AES256_SHA,                 /* PSK-AES256-SHA */
+        32,                             /* key size */
+        16,                             /* iv size */ 
+        16,                             /* block padding size */
+        SHA1_SIZE,                      /* digest size */
+        2*(SHA1_SIZE+32+16),            /* key block size */
+        hmac_sha1,                      /* hmac algorithm */
+        (crypt_func)AES_cbc_encrypt,    /* encrypt */
+        (crypt_func)AES_cbc_decrypt     /* decrypt */
+    }
+};
+#endif
 
 static void prf(SSL *ssl, const uint8_t *sec, int sec_len, 
         uint8_t *seed, int seed_len,
@@ -910,14 +943,14 @@ static void prf(SSL *ssl, const uint8_t *sec, int sec_len,
  * Generate a master secret based on the client/server random data and the
  * premaster secret.
  */
-void generate_master_secret(SSL *ssl, const uint8_t *premaster_secret)
+void generate_master_secret(SSL *ssl, const uint8_t *premaster_secret, const int premaster_secret_len)
 {
     uint8_t buf[77]; 
 //print_blob("premaster secret", premaster_secret, 48);
     strcpy((char *)buf, "master secret");
     memcpy(&buf[13], ssl->dc->client_random, SSL_RANDOM_SIZE);
     memcpy(&buf[45], ssl->dc->server_random, SSL_RANDOM_SIZE);
-    prf(ssl, premaster_secret, SSL_SECRET_SIZE, buf, 77, ssl->dc->master_secret,
+    prf(ssl, premaster_secret, premaster_secret_len, buf, 77, ssl->dc->master_secret,
             SSL_SECRET_SIZE);
 #if 0
     print_blob("client random", ssl->dc->client_random, 32);
@@ -1003,6 +1036,7 @@ static void *crypt_new(SSL *ssl, uint8_t *key, uint8_t *iv, int is_decrypt)
 {
     switch (ssl->cipher)
     {
+        case SSL_PSK_AES128_SHA:
         case SSL_AES128_SHA:
         case SSL_AES128_SHA256:
             {
@@ -1017,6 +1051,7 @@ static void *crypt_new(SSL *ssl, uint8_t *key, uint8_t *iv, int is_decrypt)
                 return (void *)aes_ctx;
             }
 
+        case SSL_PSK_AES256_SHA:
         case SSL_AES256_SHA:
         case SSL_AES256_SHA256:
             {
