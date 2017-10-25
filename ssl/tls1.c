@@ -257,6 +257,7 @@ EXP_FUNC void STDCALL ssl_ctx_free(SSL_CTX *ssl_ctx)
     free(ssl_ctx->ssl_sessions);
 #endif
 
+#ifndef CONFIG_SSL_NO_CERTS
     i = 0;
     while (i < CONFIG_SSL_MAX_CERTS && ssl_ctx->certs[i].buf)
     {
@@ -267,9 +268,10 @@ EXP_FUNC void STDCALL ssl_ctx_free(SSL_CTX *ssl_ctx)
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     remove_ca_certs(ssl_ctx->ca_cert_ctx);
 #endif
+    RSA_free(ssl_ctx->rsa_ctx);
+#endif /* CONFIG_SSL_NO_CERTS */
     ssl_ctx->chain_length = 0;
     SSL_CTX_MUTEX_DESTROY(ssl_ctx->mutex);
-    RSA_free(ssl_ctx->rsa_ctx);
     RNG_terminate();
     free(ssl_ctx);
 }
@@ -312,9 +314,11 @@ EXP_FUNC void STDCALL ssl_free(SSL *ssl)
     free(ssl->decrypt_ctx);
     ssl->decrypt_ctx = NULL;
     disposable_free(ssl);
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     x509_free(ssl->x509_ctx);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     ssl_ext_free(ssl->extensions);
     ssl->extensions = NULL;
@@ -680,6 +684,7 @@ SSL *ssl_new(SSL_CTX *ssl_ctx, int client_fd)
     return ssl;
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Add a private key to a context.
  */
@@ -697,6 +702,7 @@ int add_private_key(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj)
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /** 
  * Increment the read sequence number (as a 64 bit endian indepenent #)
@@ -2015,7 +2021,6 @@ static int check_certificate_chain(SSL *ssl)
 error:
     return ret;
 }
-#endif /* CONFIG_SSL_NO_CERTS */
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 /**
@@ -2163,6 +2168,7 @@ error:
 }
 
 #endif /* CONFIG_SSL_CERT_VERIFICATION */
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**
  * Debugging routine to display SSL handshaking stuff.

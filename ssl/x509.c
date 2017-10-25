@@ -41,6 +41,8 @@
 #include "os_port.h"
 #include "crypto_misc.h"
 
+#ifndef CONFIG_SSL_NO_CERTS
+
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 static int x509_v3_subject_alt_name(const uint8_t *cert, int offset, 
         X509_CTX *x509_ctx);
@@ -879,3 +881,4 @@ const char * x509_display_error(int error)
 }
 #endif      /* CONFIG_SSL_FULL_MODE */
 
+#endif /* CONFIG_SSL_NO_CERTS */

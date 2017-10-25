@@ -85,6 +85,7 @@ extern "C" {
 #define KEY_USAGE_ENCIPHER_ONLY             0x0001
 #define KEY_USAGE_DECIPHER_ONLY             0x8000
 
+#ifndef CONFIG_SSL_NO_CERTS
 struct _x509_ctx
 {
     char *ca_cert_dn[X509_NUM_DN_TYPES];
@@ -128,6 +129,7 @@ int x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert,
 void x509_print(const X509_CTX *cert, CA_CERT_CTX *ca_cert_ctx);
 const char * x509_display_error(int error);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**************************************************************************
  * ASN1 declarations 
@@ -161,6 +163,7 @@ const char * x509_display_error(int error);
 #define SIG_TYPE_SHA384         0x0c
 #define SIG_TYPE_SHA512         0x0d
 
+#ifndef CONFIG_SSL_NO_CERTS
 uint32_t get_asn1_length(const uint8_t *buf, int *offset);
 int asn1_get_private_key(const uint8_t *buf, int len, RSA_CTX **rsa_ctx);
 int asn1_next_obj(const uint8_t *buf, int *offset, int obj_type);
@@ -183,6 +186,7 @@ bool asn1_is_critical_ext(const uint8_t *buf, int *offset);
 #endif /* CONFIG_SSL_CERT_VERIFICATION */
 int asn1_signature_type(const uint8_t *cert, 
                                 int *offset, X509_CTX *x509_ctx);
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**************************************************************************
  * MISC declarations 

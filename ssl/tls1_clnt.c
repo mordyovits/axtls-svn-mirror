@@ -105,9 +105,11 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
             ret = process_server_hello(ssl);
             break;
 
+#ifndef CONFIG_SSL_NO_CERTS
         case HS_CERTIFICATE:
             ret = process_certificate(ssl, &ssl->x509_ctx);
             break;
+#endif /* CONFIG_SSL_NO_CERTS */
 
         case HS_SERVER_HELLO_DONE:
             if ((ret = process_server_hello_done(ssl)) == SSL_OK)

@@ -203,6 +203,7 @@ void hmac_sha1(const uint8_t *msg, int length, const uint8_t *key,
 void hmac_sha256(const uint8_t *msg, int length, const uint8_t *key, 
         int key_len, uint8_t *digest);
 
+#ifndef CONFIG_SSL_NO_CERTS
 /**************************************************************************
  * RSA declarations 
  **************************************************************************/
@@ -250,6 +251,7 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
         uint8_t *out_data, int is_signing);
 void RSA_print(const RSA_CTX *ctx);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**************************************************************************
  * RNG declarations 

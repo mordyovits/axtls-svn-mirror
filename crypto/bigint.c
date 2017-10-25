@@ -68,6 +68,8 @@
 #include "os_port.h"
 #include "bigint.h"
 
+#ifndef CONFIG_SSL_NO_CERTS
+
 #define V1      v->comps[v->size-1]                 /**< v1 for division */
 #define V2      v->comps[v->size-2]                 /**< v2 for division */
 #define U(j)    tmp_u->comps[tmp_u->size-j-1]       /**< uj for division */
@@ -1510,3 +1512,4 @@ bigint *bi_crt(BI_CTX *ctx, bigint *bi,
 }
 #endif
 /** @} */
+#endif /* CONFIG_SSL_NO_CERTS */

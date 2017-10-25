@@ -40,6 +40,8 @@
 #include "crypto.h"
 #include "crypto_misc.h"
 
+#ifndef CONFIG_SSL_NO_CERTS
+
 /* 1.2.840.113549.1.1 OID prefix - handle the following */
 /* md5WithRSAEncryption(4) */
 /* sha1WithRSAEncryption(5) */
@@ -774,3 +776,4 @@ end_check_sig:
     return ret;
 }
 
+#endif /* CONFIG_SSL_NO_CERTS */

@@ -215,9 +215,11 @@ struct _SSL
     uint16_t session_index;
     SSL_SESSION *session;
 #endif
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     X509_CTX *x509_ctx;
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     uint8_t session_id[SSL_SESSION_ID_SIZE]; 
     uint8_t client_mac[SHA256_SIZE];    /* for HMAC verification */
@@ -234,10 +236,12 @@ struct _SSL_CTX
 {
     uint32_t options;
     uint8_t chain_length;
+#ifndef CONFIG_SSL_NO_CERTS
     RSA_CTX *rsa_ctx;
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     CA_CERT_CTX *ca_cert_ctx;
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
     SSL *head;
     SSL *tail;
     SSL_CERT certs[CONFIG_SSL_MAX_CERTS];
@@ -285,7 +289,9 @@ int pkcs12_decode(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj, const char *password)
 int load_key_certs(SSL_CTX *ssl_ctx);
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 int add_cert_auth(SSL_CTX *ssl_ctx, const uint8_t *buf, int len);
+#ifndef CONFIG_SSL_NO_CERTS
 void remove_ca_certs(CA_CERT_CTX *ca_cert_ctx);
+#endif /* CONFIG_SSL_NO_CERTS */
 #endif
 #ifdef CONFIG_SSL_ENABLE_CLIENT
 int do_client_connect(SSL *ssl);
@@ -295,8 +301,10 @@ int do_client_connect(SSL *ssl);
 void DISPLAY_STATE(SSL *ssl, int is_send, uint8_t state, int not_ok);
 void DISPLAY_BYTES(SSL *ssl, const char *format, 
         const uint8_t *data, int size, ...);
+#ifndef CONFIG_SSL_NO_CERTS
 void DISPLAY_CERT(SSL *ssl, const X509_CTX *x509_ctx);
 void DISPLAY_RSA(SSL *ssl,  const RSA_CTX *rsa_ctx);
+#endif /* CONFIG_SSL_NO_CERTS */
 void DISPLAY_ALERT(SSL *ssl, int alert);
 #else
 #define DISPLAY_STATE(A,B,C,D)
@@ -311,9 +319,11 @@ void DISPLAY_BYTES(SSL *ssl, const char *format,/* win32 has no variadic macros 
 #endif
 #endif
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 int process_certificate(SSL *ssl, X509_CTX **x509_ctx);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
 SSL_SESSION *ssl_session_update(int max_sessions, 
         SSL_SESSION *ssl_sessions[], SSL *ssl,
