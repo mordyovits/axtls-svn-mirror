@@ -44,6 +44,8 @@
 #include "os_port.h"
 #include "ssl.h"
 
+#ifndef CONFIG_SSL_NO_CERTS
+
 static int do_obj(SSL_CTX *ssl_ctx, int obj_type, 
                     SSLObjLoader *ssl_obj, const char *password);
 #ifdef CONFIG_SSL_HAS_PEM
@@ -486,3 +488,5 @@ error:
     return ret;
 
 }
+
+#endif /* CONFIG_SSL_NO_CERTS */

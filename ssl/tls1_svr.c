@@ -46,10 +46,12 @@ static int send_server_hello_sequence(SSL *ssl);
 static int send_server_hello(SSL *ssl);
 static int send_server_hello_done(SSL *ssl);
 static int process_client_key_xchg(SSL *ssl);
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 static int send_certificate_request(SSL *ssl);
 static int process_cert_verify(SSL *ssl);
-#endif
+#endif /* CONFIG_SSL_CERT_VERIFICATION */
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /*
  * Establish a new SSL connection to an SSL client.
@@ -85,6 +87,7 @@ int do_svr_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
                 ret = send_server_hello_sequence(ssl);
             break;
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
         case HS_CERTIFICATE:/* the client sends its cert */
             ret = process_certificate(ssl, &ssl->x509_ctx);
@@ -104,7 +107,9 @@ int do_svr_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
             ret = process_cert_verify(ssl);
             add_packet(ssl, buf, hs_len);   /* needs to be done after */
             break;
-#endif
+#endif /* CONFIG_SSL_CERT_VERIFICATION */
+#endif /* CONFIG_SSL_NO_CERTS */
+
         case HS_CLIENT_KEY_XCHG:
             ret = process_client_key_xchg(ssl);
             break;
@@ -267,6 +272,7 @@ static int send_server_hello_sequence(SSL *ssl)
         }
         else 
 #endif
+#ifndef CONFIG_SSL_NO_CERTS
         if ((ret = send_certificate(ssl)) == SSL_OK)
         {
 #ifdef CONFIG_SSL_CERT_VERIFICATION
@@ -286,8 +292,11 @@ static int send_server_hello_sequence(SSL *ssl)
                 ssl->next_state = HS_CLIENT_KEY_XCHG;
             }
         }
+#else /* !CONFIG_SSL_NO_CERTS */
+        ret = send_server_hello_done(ssl);
+        ssl->next_state = HS_CLIENT_KEY_XCHG;
+#endif /* CONFIG_SSL_NO_CERTS */
     }
-
     return ret;
 }
 
@@ -372,9 +381,10 @@ static int process_client_key_xchg(SSL *ssl)
     int pkt_size = ssl->bm_index;
     int premaster_size, secret_length = (buf[2] << 8) + buf[3];
     uint8_t premaster_secret[MAX_KEY_BYTE_SIZE];
-    RSA_CTX *rsa_ctx = ssl->ssl_ctx->rsa_ctx;
     int offset = 4;
     int ret = SSL_OK;
+#ifndef CONFIG_SSL_NO_CERTS
+    RSA_CTX *rsa_ctx = ssl->ssl_ctx->rsa_ctx;
     
     if (rsa_ctx == NULL)
     {
@@ -405,17 +415,33 @@ static int process_client_key_xchg(SSL *ssl)
 
         /* and continue - will die eventually when checking the mac */
     }
+#else /* CONFIG_SSL_NO_CERTS */
+    /* MOXXX cke in psk cipher is the identity.  skip parsing it for now */
+    premaster_secret[0] = 0x00;
+    premaster_secret[1] = 0x02; // N octets long PSK
+    premaster_secret[2] = 0x00;
+    premaster_secret[3] = 0x00;
+    premaster_secret[4] = 0x00;
+    premaster_secret[5] = 0x02; // N octets long PSK
+    premaster_secret[6] = 0x66;
+    premaster_secret[7] = 0x66; // hardcoded PSK
+    premaster_size = 8;
+#endif /* CONFIG_SSL_NO_CERTS */
 
     generate_master_secret(ssl, premaster_secret, premaster_size);
 
-#ifdef CONFIG_SSL_CERT_VERIFICATION
+#if defined(CONFIG_SSL_CERT_VERIFICATION) && defined(CONFIG_SSL_NO_CERTS)
     ssl->next_state = IS_SET_SSL_FLAG(SSL_CLIENT_AUTHENTICATION) ?  
                                             HS_CERT_VERIFY : HS_FINISHED;
 #else
     ssl->next_state = HS_FINISHED; 
 #endif
 
+#ifndef CONFIG_SSL_NO_CERTS
     ssl->dc->bm_proc_index += rsa_ctx->num_octets+offset;
+#else /* !CONFIG_SSL_NO_CERTS */
+    ssl->dc->bm_proc_index += offset; // MOXX and the cke?  dunno
+#endif
 error:
     return ret;
 }
@@ -434,6 +460,7 @@ static const uint8_t g_cert_request[] = { HS_CERT_REQ, 0,
 
 static const uint8_t g_cert_request_v1[] = { HS_CERT_REQ, 0, 0, 4, 1, 0, 0, 0 };
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Send the certificate request message.
  */
@@ -450,7 +477,9 @@ static int send_certificate_request(SSL *ssl)
             g_cert_request_v1, sizeof(g_cert_request_v1));
     }
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Ensure the client has the private key by first decrypting the packet and
  * then checking the packet digests.
@@ -526,5 +555,6 @@ end_cert_vfy:
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 #endif

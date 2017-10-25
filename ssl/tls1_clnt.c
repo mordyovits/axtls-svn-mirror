@@ -57,8 +57,10 @@ static int send_client_hello(SSL *ssl);
 static int process_server_hello(SSL *ssl);
 static int process_server_hello_done(SSL *ssl);
 static int send_client_key_xchg(SSL *ssl);
+#ifndef CONFIG_SSL_NO_CERTS
 static int process_cert_req(SSL *ssl);
 static int send_cert_verify(SSL *ssl);
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /*
  * Establish a new SSL connection to an SSL server.
@@ -134,11 +136,11 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
                 }
             }
             break;
-
+#ifndef CONFIG_SSL_NO_CERTS
         case HS_CERT_REQ:
             ret = process_cert_req(ssl);
             break;
-
+#endif /* CONFIG_SSL_NO_CERTS */
         case HS_FINISHED:
             ret = process_finished(ssl, buf, hs_len);
             disposable_free(ssl);   /* free up some memory */
@@ -450,6 +452,7 @@ static int send_client_key_xchg(SSL *ssl)
     return send_packet(ssl, PT_HANDSHAKE_PROTOCOL, NULL, cke_size);
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Process the certificate request.
  */
@@ -501,7 +504,9 @@ static int process_cert_req(SSL *ssl)
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Send a certificate verify message.
  */
@@ -568,5 +573,6 @@ static int send_cert_verify(SSL *ssl)
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 #endif      /* CONFIG_SSL_ENABLE_CLIENT */

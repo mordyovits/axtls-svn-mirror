@@ -218,6 +218,7 @@ static void do_server(int argc, char *argv[])
         exit(1);
     }
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
     if (private_key_file)
     {
@@ -245,7 +246,7 @@ static void do_server(int argc, char *argv[])
             exit(1);
         }
     }
-#endif
+#endif /* CONFIG_SSL_SKELETON_MODE */
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     for (i = 0; i < ca_cert_index; i++)
@@ -262,6 +263,7 @@ static void do_server(int argc, char *argv[])
 #ifndef CONFIG_SSL_SKELETON_MODE
     free(cert);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     /* Create socket for incoming connections */
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -573,6 +575,7 @@ static void do_client(int argc, char *argv[])
         exit(1);
     }
 
+#ifndef CONFIG_SSL_NO_CERTS
     if (private_key_file)
     {
         int obj_type = SSL_OBJ_RSA_KEY;
@@ -611,6 +614,7 @@ static void do_client(int argc, char *argv[])
 
     free(cert);
     free(ca_cert);
+#endif /* CONFIG_SSL_NO_CERTS */
 
     /*************************************************************************
      * This is where the interesting stuff happens. Up until now we've

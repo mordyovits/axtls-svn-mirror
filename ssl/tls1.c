@@ -52,7 +52,9 @@ static int set_key_block(SSL *ssl, int is_write);
 static int verify_digest(SSL *ssl, int mode, const uint8_t *buf, int read_len);
 static void *crypt_new(SSL *ssl, uint8_t *key, uint8_t *iv, int is_decrypt);
 static int send_raw_packet(SSL *ssl, uint8_t protocol);
+#ifndef CONFIG_SSL_NO_CERTS
 static int check_certificate_chain(SSL *ssl);
+#endif
 
 /**
  * The server will pick the cipher based on the order that the order that the
@@ -201,13 +203,14 @@ EXP_FUNC SSL_CTX *STDCALL ssl_ctx_new(uint32_t options, int num_sessions)
     SSL_CTX *ssl_ctx = (SSL_CTX *)calloc(1, sizeof (SSL_CTX));
     ssl_ctx->options = options;
     RNG_initialize();
-
+#ifndef CONFIG_SSL_NO_CERTS
     if (load_key_certs(ssl_ctx) < 0)
     {
         free(ssl_ctx);  /* can't load our key/certificate pair, so die */
         return NULL;
     }
-
+#endif /* CONFIG_SSL_NO_CERTS */
+    
 #ifndef CONFIG_SSL_SKELETON_MODE
     ssl_ctx->num_sessions = num_sessions;
 #endif
@@ -370,6 +373,7 @@ EXP_FUNC int STDCALL ssl_write(SSL *ssl, const uint8_t *out_data, int out_len)
     return out_len;
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /**
  * Add a certificate to the certificate chain.
  */
@@ -439,7 +443,9 @@ error:
     x509_free(cert);        /* don't need anymore */
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 /**
  * Add a certificate authority.
@@ -487,7 +493,9 @@ int add_cert_auth(SSL_CTX *ssl_ctx, const uint8_t *buf, int len)
 
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Retrieve an X.509 distinguished name component
  */
@@ -538,7 +546,9 @@ EXP_FUNC const char * STDCALL ssl_get_cert_dn(const SSL *ssl, int component)
             return NULL;
     }
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
+#ifndef CONFIG_SSL_NO_CERTS
 /*
  * Retrieve a "Subject Alternative Name" from a v3 certificate
  */
@@ -558,7 +568,7 @@ EXP_FUNC const char * STDCALL ssl_get_cert_subject_alt_dnsname(const SSL *ssl,
 
     return ssl->x509_ctx->subject_alt_dnsnames[dnsindex];
 }
-
+#endif /* CONFIG_SSL_NO_CERTS */
 #endif /* CONFIG_SSL_CERT_VERIFICATION */
 
 /*
@@ -1714,6 +1724,7 @@ error:
     return ret;
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /**
  * Send a certificate.
  */
@@ -1760,6 +1771,7 @@ int send_certificate(SSL *ssl)
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**
  * Create a blob of memory that we'll get rid of once the handshake is
@@ -1966,6 +1978,7 @@ EXP_FUNC int STDCALL ssl_get_config(int offset)
     }
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /**
  * Check the certificate chain to see if the certs are supported
  */
@@ -2002,6 +2015,7 @@ static int check_certificate_chain(SSL *ssl)
 error:
     return ret;
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 /**
