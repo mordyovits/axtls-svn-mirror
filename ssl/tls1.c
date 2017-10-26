@@ -2238,6 +2238,7 @@ void DISPLAY_STATE(SSL *ssl, int is_send, uint8_t state, int not_ok)
     printf("%s\n", str);
 }
 
+#ifndef CONFIG_SSL_NO_CERTS
 /**
  * Debugging routine to display RSA objects
  */
@@ -2249,6 +2250,7 @@ void DISPLAY_RSA(SSL *ssl, const RSA_CTX *rsa_ctx)
     RSA_print(rsa_ctx);
     TTY_FLUSH();
 }
+#endif /* CONFIG_SSL_NO_CERTS */
 
 /**
  * Debugging routine to display SSL handshaking bytes.
@@ -2277,12 +2279,14 @@ EXP_FUNC void STDCALL ssl_display_error(int error_code)
 
     printf("Error: ");
 
+#ifndef CONFIG_SSL_NO_CERTS
     /* X509 error? */
     if (error_code < SSL_X509_OFFSET)
     {
         printf("%s\n", x509_display_error(error_code - SSL_X509_OFFSET));
         return;
     }
+#endif /* CONFIG_SSL_NO_CERTS */
 
     /* SSL alert error code */
     if (error_code > SSL_ERROR_CONN_LOST)

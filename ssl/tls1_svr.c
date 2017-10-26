@@ -440,7 +440,7 @@ static int process_client_key_xchg(SSL *ssl)
 #ifndef CONFIG_SSL_NO_CERTS
     ssl->dc->bm_proc_index += rsa_ctx->num_octets+offset;
 #else /* !CONFIG_SSL_NO_CERTS */
-    ssl->dc->bm_proc_index += offset; // MOXX and the cke?  dunno
+    ssl->dc->bm_proc_index += offset; // MOXXX and the cke?  dunno
 #endif
 error:
     return ret;

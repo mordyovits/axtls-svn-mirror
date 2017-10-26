@@ -430,8 +430,8 @@ static int send_client_key_xchg(SSL *ssl)
     buf[3] = (enc_secret_size + 2) & 0xff;
     buf[4] = enc_secret_size >> 8;
     buf[5] = enc_secret_size & 0xff;
-    cke_size = enc_secret_size+6
-    premaster_secret_len = 48
+    cke_size = enc_secret_size+6;
+    premaster_secret_len = 48;
     #else /* CONFIG_SSL_NO_CERTS */
     buf[2] = 0x00;
     buf[3] = 17; // two byte identity
