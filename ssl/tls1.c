@@ -1531,9 +1531,10 @@ static int do_handshake(SSL *ssl, uint8_t *buf, int read_len)
     if (handshake_type != ssl->next_state)
     {
 #ifdef CONFIG_SSL_NO_CERTS
-        /* In PSK ciphers the server can optionaly send a SKE with an
+        /* In PSK ciphers the server can optionally send a SKE with an
            identity hint. Ignore it and move on */
-        if (is_client && handshake_type == HS_SERVER_KEY_XCHG)
+        if (is_client && handshake_type == HS_SERVER_KEY_XCHG &&
+                    ssl->next_state == HS_SERVER_HELLO_DONE)
         {
             ssl->bm_index = hs_len;     /* store the size and check later */
             add_packet(ssl, buf, hs_len);
