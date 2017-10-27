@@ -1526,8 +1526,24 @@ static int do_handshake(SSL *ssl, uint8_t *buf, int read_len)
     /* some integrity checking on the handshake */
     PARANOIA_CHECK(read_len-SSL_HS_HDR_SIZE, hs_len);
 
+    hs_len += SSL_HS_HDR_SIZE;  /* adjust for when adding packets */
+
     if (handshake_type != ssl->next_state)
     {
+#ifdef CONFIG_SSL_NO_CERTS
+        /* In PSK ciphers the server can optionaly send a SKE with an
+           identity hint. Ignore it and move on */
+        if (is_client && handshake_type == HS_SERVER_KEY_XCHG)
+        {
+            ssl->bm_index = hs_len;     /* store the size and check later */
+            add_packet(ssl, buf, hs_len);
+            if (hs_len < read_len)
+            {
+                return do_handshake(ssl, &buf[hs_len], read_len-hs_len);
+            }
+            return ret;
+        }
+#endif /* CONFIG_SSL_NO_CERTS */
         /* handle a special case on the client */
         if (!is_client || handshake_type != HS_CERT_REQ ||
                         ssl->next_state != HS_SERVER_HELLO_DONE)
@@ -1537,7 +1553,6 @@ static int do_handshake(SSL *ssl, uint8_t *buf, int read_len)
         }
     }
 
-    hs_len += SSL_HS_HDR_SIZE;  /* adjust for when adding packets */
     ssl->bm_index = hs_len;     /* store the size and check later */
     DISPLAY_STATE(ssl, 0, handshake_type, 0);
 
