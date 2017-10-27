@@ -114,7 +114,7 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
         case HS_SERVER_HELLO_DONE:
             if ((ret = process_server_hello_done(ssl)) == SSL_OK)
             {
-                #ifndef CONFIG_SSL_NO_CERTS
+#ifndef CONFIG_SSL_NO_CERTS
                 if (IS_SET_SSL_FLAG(SSL_HAS_CERT_REQ))
                 {
                     if ((ret = send_certificate(ssl)) == SSL_OK &&
@@ -127,9 +127,9 @@ int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
                 {
                     ret = send_client_key_xchg(ssl);
                 }
-                #else /* CONFIG_SSL_NO_CERTS */
+#else /* !CONFIG_SSL_NO_CERTS */
                 ret = send_client_key_xchg(ssl);
-                #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
                 if (ret == SSL_OK && 
                      (ret = send_change_cipher_spec(ssl)) == SSL_OK)
@@ -365,13 +365,13 @@ static int process_server_hello(SSL *ssl)
 
     /* get the real cipher we are using - ignore MSB */
     ssl->cipher = buf[++offset];
-    #ifndef CONFIG_SSL_NO_CERTS
+#ifndef CONFIG_SSL_NO_CERTS
     ssl->next_state = IS_SET_SSL_FLAG(SSL_SESSION_RESUME) ? 
                                         HS_FINISHED : HS_CERTIFICATE;
-    #else /* CONFIG_SSL_NO_CERTS */
+#else /* !CONFIG_SSL_NO_CERTS */
     ssl->next_state = IS_SET_SSL_FLAG(SSL_SESSION_RESUME) ? 
                                         HS_FINISHED : HS_SERVER_HELLO_DONE;
-    #endif
+#endif /* CONFIG_SSL_NO_CERTS */
     offset += 2; // ignore compression
     PARANOIA_CHECK(pkt_size, offset);
 
