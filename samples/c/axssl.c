@@ -858,6 +858,7 @@ static void display_cipher(SSL *ssl)
     printf("CIPHER is ");
     switch (ssl_get_cipher_id(ssl))
     {
+#ifndef CONFIG_SSL_NO_CERTS
         case SSL_AES128_SHA:
             printf("AES128-SHA");
             break;
@@ -873,7 +874,15 @@ static void display_cipher(SSL *ssl)
         case SSL_AES256_SHA256:
             printf("AES256-SHA256");
             break;
+#else /* CONFIG_SSL_NO_CERTS */
+        case SSL_PSK_AES128_SHA:
+            printf("PSK-AES256-SHA");
+            break;
 
+        case SSL_PSK_AES256_SHA:
+            printf("PSK-AES256-SHA");
+            break;
+#endif /* CONFIG_SSL_NO_CERTS */
         default:
             printf("Unknown - %d", ssl_get_cipher_id(ssl));
             break;
