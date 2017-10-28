@@ -704,6 +704,20 @@ error:
 }
 #endif /* CONFIG_SSL_NO_CERTS */
 
+#ifdef CONFIG_SSL_NO_CERTS
+EXP_FUNC int STDCALL ssl_set_preshared_key(SSL_CTX *ssl_ctx, uint8_t *psk, uint8_t psk_len)
+{
+    print_blob("psk", psk, psk_len);
+    if (psk_len > MAX_PSK_SIZE)
+    {
+        return SSL_NOT_OK;
+    }
+    memcpy(ssl_ctx->preshared_key, psk, psk_len);
+    ssl_ctx->preshared_key_len = psk_len;
+    return SSL_OK;
+}
+#endif /* CONFIG_SSL_NO_CERTS */
+
 /** 
  * Increment the read sequence number (as a 64 bit endian indepenent #)
  */     

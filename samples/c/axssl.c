@@ -615,6 +615,11 @@ static void do_client(int argc, char *argv[])
     free(cert);
     free(ca_cert);
 #endif /* CONFIG_SSL_NO_CERTS */
+    if (ssl_set_preshared_key(ssl_ctx, (uint8_t*)"ff", 2))
+    {
+        printf("Failed to set preshared_key.\n");
+        exit(1);
+    }
 
     /*************************************************************************
      * This is where the interesting stuff happens. Up until now we've
