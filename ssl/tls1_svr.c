@@ -381,8 +381,9 @@ static int process_client_key_xchg(SSL *ssl)
 {
     uint8_t *buf = &ssl->bm_data[ssl->dc->bm_proc_index];
     int pkt_size = ssl->bm_index;
-    int premaster_size, secret_length = (buf[2] << 8) + buf[3];
+    int premaster_size = 0;
 #ifndef CONFIG_SSL_NO_CERTS
+    int secret_length = (buf[2] << 8) + buf[3];
     uint8_t premaster_secret[MAX_KEY_BYTE_SIZE];
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t premaster_secret[4+MAX_PSK_SIZE*2];  // two uint16s + double the psk (first is zeros)
