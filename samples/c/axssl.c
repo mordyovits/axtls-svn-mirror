@@ -113,7 +113,7 @@ static void do_server(int argc, char *argv[])
 #endif
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
-    uint8_t psk_len;
+    uint8_t psk_len = 0;
 #endif  /* CONFIG_SSL_NO_CERTS */
 #ifdef WIN32
     char yes = 1;
@@ -488,7 +488,7 @@ static void do_client(int argc, char *argv[])
     char **ca_cert, **cert;
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
-    uint8_t psk_len;
+    uint8_t psk_len = 0;
 #endif  /* CONFIG_SSL_NO_CERTS */
     uint8_t session_id[SSL_SESSION_ID_SIZE];
     fd_set read_set;
