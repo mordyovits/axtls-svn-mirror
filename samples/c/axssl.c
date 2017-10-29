@@ -447,6 +447,10 @@ static void do_client(int argc, char *argv[])
     int cert_index = 0, ca_cert_index = 0;
     int cert_size, ca_cert_size;
     char **ca_cert, **cert;
+#ifdef CONFIG_SSL_NO_CERTS
+    uint8_t psk[MAX_PSK_SIZE];
+    uint8_t psk_len;
+#endif  /* CONFIG_SSL_NO_CERTS */
     uint8_t session_id[SSL_SESSION_ID_SIZE];
     fd_set read_set;
     const char *password = NULL;
@@ -519,6 +523,13 @@ static void do_client(int argc, char *argv[])
         {
             options &= ~SSL_SERVER_VERIFY_LATER;
         }
+#ifdef CONFIG_SSL_NO_CERTS
+        else if (strcmp(argv[i], "-psk") == 0)
+        {
+            psk_len = strlen(argv[i+1]);
+            memcpy(psk, argv[++i], psk_len);
+        }
+#endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-reconnect") == 0)
         {
             reconnect = 4;
@@ -614,12 +625,13 @@ static void do_client(int argc, char *argv[])
 
     free(cert);
     free(ca_cert);
-#endif /* CONFIG_SSL_NO_CERTS */
-    if (ssl_set_preshared_key(ssl_ctx, (uint8_t*)"ff", 2))
+#else
+    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
     {
         printf("Failed to set preshared_key.\n");
         exit(1);
     }
+#endif /* CONFIG_SSL_NO_CERTS */
 
     /*************************************************************************
      * This is where the interesting stuff happens. Up until now we've

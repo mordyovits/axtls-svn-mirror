@@ -209,6 +209,8 @@ EXP_FUNC SSL_CTX *STDCALL ssl_ctx_new(uint32_t options, int num_sessions)
         free(ssl_ctx);  /* can't load our key/certificate pair, so die */
         return NULL;
     }
+#else /* CONFIG_SSL_NO_CERTS */
+    ssl_ctx->preshared_key_len = 0;
 #endif /* CONFIG_SSL_NO_CERTS */
     
 #ifndef CONFIG_SSL_SKELETON_MODE
