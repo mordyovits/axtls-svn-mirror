@@ -103,6 +103,7 @@ static void do_server(int argc, char *argv[])
     SSL_CTX *ssl_ctx;
     int server_fd, res = 0;
     socklen_t client_len;
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
     char *private_key_file = NULL;
     const char *password = NULL;
@@ -110,7 +111,7 @@ static void do_server(int argc, char *argv[])
     int cert_index = 0;
     int cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
 #endif
-#ifdef CONFIG_SSL_NO_CERTS
+#else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
     uint8_t psk_len;
 #endif  /* CONFIG_SSL_NO_CERTS */
@@ -129,9 +130,11 @@ static void do_server(int argc, char *argv[])
 #endif
     fd_set read_set;
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
     cert = (char **)calloc(1, sizeof(char *)*cert_size);
 #endif
+#endif  /* CONFIG_SSL_NO_CERTS */
 
     while (i < argc)
     {
@@ -456,7 +459,6 @@ static void do_client(int argc, char *argv[])
     uint16_t port = 4433;
     uint32_t options = SSL_SERVER_VERIFY_LATER|SSL_DISPLAY_CERTS;
     int client_fd;
-    char *private_key_file = NULL;
     struct sockaddr_in client_addr;
     struct hostent *hostent;
     int reconnect = 0;
@@ -464,24 +466,28 @@ static void do_client(int argc, char *argv[])
     SSL_CTX *ssl_ctx;
     SSL *ssl = NULL;
     int quiet = 0;
+#ifndef CONFIG_SSL_NO_CERTS
+    char *private_key_file = NULL;
+    const char *password = NULL;
     int cert_index = 0, ca_cert_index = 0;
     int cert_size, ca_cert_size;
     char **ca_cert, **cert;
-#ifdef CONFIG_SSL_NO_CERTS
+#else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
     uint8_t psk_len;
 #endif  /* CONFIG_SSL_NO_CERTS */
     uint8_t session_id[SSL_SESSION_ID_SIZE];
     fd_set read_set;
-    const char *password = NULL;
     SSL_EXTENSIONS *extensions = NULL;
 
     FD_ZERO(&read_set);
     sin_addr = inet_addr("127.0.0.1");
+#ifndef CONFIG_SSL_NO_CERTS
     cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
     ca_cert_size = ssl_get_config(SSL_MAX_CA_CERT_CFG_OFFSET);
     ca_cert = (char **)calloc(1, sizeof(char *)*ca_cert_size);
     cert = (char **)calloc(1, sizeof(char *)*cert_size);
+#endif  /* CONFIG_SSL_NO_CERTS */
 
     while (i < argc)
     {
@@ -820,12 +826,14 @@ static void print_options(char *option)
  */
 static void print_server_options(char *option)
 {
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
     int cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
 #endif
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     int ca_cert_size = ssl_get_config(SSL_MAX_CA_CERT_CFG_OFFSET);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     printf("unknown option %s\n", option);
     printf("usage: s_server [args ...]\n");
@@ -864,10 +872,12 @@ static void print_server_options(char *option)
  */
 static void print_client_options(char *option)
 {
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_ENABLE_CLIENT
     int cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
     int ca_cert_size = ssl_get_config(SSL_MAX_CA_CERT_CFG_OFFSET);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     printf("unknown option %s\n", option);
 #ifdef CONFIG_SSL_ENABLE_CLIENT
