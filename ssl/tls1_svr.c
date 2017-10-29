@@ -65,10 +65,12 @@ EXP_FUNC SSL * STDCALL ssl_server_new(SSL_CTX *ssl_ctx, int client_fd)
     ssl = ssl_new(ssl_ctx, client_fd);
     ssl->next_state = HS_CLIENT_HELLO;
 
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_FULL_MODE
     if (ssl_ctx->chain_length == 0)
         printf("Warning - no server certificate defined\n"); TTY_FLUSH();
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 
     return ssl;
 }

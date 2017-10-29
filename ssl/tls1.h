@@ -236,8 +236,8 @@ typedef struct _SSL SSL;
 struct _SSL_CTX
 {
     uint32_t options;
-    uint8_t chain_length;
 #ifndef CONFIG_SSL_NO_CERTS
+    uint8_t chain_length;
     RSA_CTX *rsa_ctx;
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     CA_CERT_CTX *ca_cert_ctx;

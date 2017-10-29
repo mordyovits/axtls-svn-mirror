@@ -271,8 +271,8 @@ EXP_FUNC void STDCALL ssl_ctx_free(SSL_CTX *ssl_ctx)
     remove_ca_certs(ssl_ctx->ca_cert_ctx);
 #endif
     RSA_free(ssl_ctx->rsa_ctx);
-#endif /* CONFIG_SSL_NO_CERTS */
     ssl_ctx->chain_length = 0;
+#endif /* CONFIG_SSL_NO_CERTS */
     SSL_CTX_MUTEX_DESTROY(ssl_ctx->mutex);
     RNG_terminate();
     free(ssl_ctx);
