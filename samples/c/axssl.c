@@ -110,6 +110,10 @@ static void do_server(int argc, char *argv[])
     int cert_index = 0;
     int cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
 #endif
+#ifdef CONFIG_SSL_NO_CERTS
+    uint8_t psk[MAX_PSK_SIZE];
+    uint8_t psk_len;
+#endif  /* CONFIG_SSL_NO_CERTS */
 #ifdef WIN32
     char yes = 1;
 #else
@@ -140,6 +144,7 @@ static void do_server(int argc, char *argv[])
 
             port = atoi(argv[++i]);
         }
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
         else if (strcmp(argv[i], "-cert") == 0)
         {
@@ -170,6 +175,13 @@ static void do_server(int argc, char *argv[])
             password = argv[++i];
         }
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+        else if (strcmp(argv[i], "-psk") == 0)
+        {
+            psk_len = strlen(argv[i+1]);
+            memcpy(psk, argv[++i], psk_len);
+        }
+#endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-quiet") == 0)
         {
             quiet = 1;
@@ -199,10 +211,12 @@ static void do_server(int argc, char *argv[])
         {
             options |= SSL_DISPLAY_STATES;
         }
+#ifndef CONFIG_SSL_NO_CERTS
         else if (strcmp(argv[i], "-show-rsa") == 0)
         {
             options |= SSL_DISPLAY_RSA;
         }
+#endif /* CONFIG_SSL_NO_CERTS */
 #endif
         else    /* don't know what this is */
         {
@@ -263,6 +277,12 @@ static void do_server(int argc, char *argv[])
 #ifndef CONFIG_SSL_SKELETON_MODE
     free(cert);
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
+    {
+        printf("Failed to set preshared_key.\n");
+        exit(1);
+    }
 #endif /* CONFIG_SSL_NO_CERTS */
 
     /* Create socket for incoming connections */
@@ -447,6 +467,10 @@ static void do_client(int argc, char *argv[])
     int cert_index = 0, ca_cert_index = 0;
     int cert_size, ca_cert_size;
     char **ca_cert, **cert;
+#ifdef CONFIG_SSL_NO_CERTS
+    uint8_t psk[MAX_PSK_SIZE];
+    uint8_t psk_len;
+#endif  /* CONFIG_SSL_NO_CERTS */
     uint8_t session_id[SSL_SESSION_ID_SIZE];
     fd_set read_set;
     const char *password = NULL;
@@ -487,6 +511,7 @@ static void do_client(int argc, char *argv[])
 
             sin_addr = *((uint32_t **)hostent->h_addr_list)[0];
         }
+#ifndef CONFIG_SSL_NO_CERTS
         else if (strcmp(argv[i], "-cert") == 0)
         {
             if (i >= argc-1 || cert_index >= cert_size)
@@ -506,6 +531,15 @@ static void do_client(int argc, char *argv[])
             private_key_file = argv[++i];
             options |= SSL_NO_DEFAULT_KEY;
         }
+        else if (strcmp(argv[i], "-pass") == 0)
+        {
+            if (i >= argc-1)
+            {
+                print_client_options(argv[i]);
+            }
+
+            password = argv[++i];
+        }
         else if (strcmp(argv[i], "-CAfile") == 0)
         {
             if (i >= argc-1 || ca_cert_index >= ca_cert_size)
@@ -519,6 +553,13 @@ static void do_client(int argc, char *argv[])
         {
             options &= ~SSL_SERVER_VERIFY_LATER;
         }
+#else /* CONFIG_SSL_NO_CERTS */
+        else if (strcmp(argv[i], "-psk") == 0)
+        {
+            psk_len = strlen(argv[i+1]);
+            memcpy(psk, argv[++i], psk_len);
+        }
+#endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-reconnect") == 0)
         {
             reconnect = 4;
@@ -527,15 +568,6 @@ static void do_client(int argc, char *argv[])
         {
             quiet = 1;
             options &= ~SSL_DISPLAY_CERTS;
-        }
-        else if (strcmp(argv[i], "-pass") == 0)
-        {
-            if (i >= argc-1)
-            {
-                print_client_options(argv[i]);
-            }
-
-            password = argv[++i];
         }
         else if (strcmp(argv[i], "-servername") == 0)
         {
@@ -614,6 +646,12 @@ static void do_client(int argc, char *argv[])
 
     free(cert);
     free(ca_cert);
+#else
+    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
+    {
+        printf("Failed to set preshared_key.\n");
+        exit(1);
+    }
 #endif /* CONFIG_SSL_NO_CERTS */
 
     /*************************************************************************
@@ -792,6 +830,7 @@ static void print_server_options(char *option)
     printf("unknown option %s\n", option);
     printf("usage: s_server [args ...]\n");
     printf(" -accept arg\t- port to accept on (default is 4433)\n");
+#ifndef CONFIG_SSL_NO_CERTS
 #ifndef CONFIG_SSL_SKELETON_MODE
     printf(" -cert arg\t- certificate file to add (in addition to default)"
                                     " to chain -\n"
@@ -799,16 +838,23 @@ static void print_server_options(char *option)
     printf(" -key arg\t- Private key file to use\n");
     printf(" -pass\t\t- private key file pass phrase source\n");
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+    printf(" -psk arg\t- Preshared key in capitals hexadecimal\n");
+#endif /* CONFIG_SSL_NO_CERTS */
     printf(" -quiet\t\t- No server output\n");
+#ifndef CONFIG_SSL_NO_CERTS
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     printf(" -verify\t- turn on peer certificate verification\n");
     printf(" -CAfile arg\t- Certificate authority\n");
     printf("\t\t  Can repeat up to %d times\n", ca_cert_size);
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 #ifdef CONFIG_SSL_FULL_MODE
     printf(" -debug\t\t- Print more output\n");
     printf(" -state\t\t- Show state messages\n");
+#ifndef CONFIG_SSL_NO_CERTS
     printf(" -show-rsa\t- Show RSA state\n");
+#endif /* CONFIG_SSL_NO_CERTS */
 #endif
     exit(1);
 }
@@ -828,21 +874,27 @@ static void print_client_options(char *option)
     printf("usage: s_client [args ...]\n");
     printf(" -connect host:port - who to connect to (default "
             "is localhost:4433)\n");
+#ifndef CONFIG_SSL_NO_CERTS
     printf(" -verify\t- turn on peer certificate verification\n");
     printf(" -cert arg\t- certificate file to use\n");
     printf("\t\t  Can repeat up to %d times\n", cert_size);
     printf(" -key arg\t- Private key file to use\n");
+    printf(" -pass\t\t- Private key file pass phrase source\n");
     printf(" -CAfile arg\t- Certificate authority\n");
     printf("\t\t  Can repeat up to %d times\n", ca_cert_size);
+#else /* CONFIG_SSL_NO_CERTS */
+    printf(" -psk arg\t- Preshared key in capitals hexadecimal\n");
+#endif /* CONFIG_SSL_NO_CERTS */
     printf(" -quiet\t\t- No client output\n");
     printf(" -reconnect\t- Drop and re-make the connection "
             "with the same Session-ID\n");
-    printf(" -pass\t\t- Private key file pass phrase source\n");
     printf(" -servername\t- Set TLS extension servername in ClientHello\n");
 #ifdef CONFIG_SSL_FULL_MODE
     printf(" -debug\t\t- Print more output\n");
     printf(" -state\t\t- Show state messages\n");
+#ifndef CONFIG_SSL_NO_CERTS
     printf(" -show-rsa\t- Show RSA state\n");
+#endif /* CONFIG_SSL_NO_CERTS */
 #endif
 #else
     printf("Change configuration to allow this feature\n");

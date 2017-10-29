@@ -398,11 +398,11 @@ static int process_server_hello_done(SSL *ssl)
 static int send_client_key_xchg(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
-    #ifndef CONFIG_SSL_NO_CERTS
+#ifndef CONFIG_SSL_NO_CERTS
     uint8_t premaster_secret[SSL_SECRET_SIZE];
-    #else /* CONFIG_SSL_NO_CERTS */
-    uint8_t premaster_secret[7]; // MOXXX hardcoded psk length
-    #endif
+#else /* CONFIG_SSL_NO_CERTS */
+    uint8_t premaster_secret[4+MAX_PSK_SIZE*2];  // two uint16s + double the psk (first is zeros)
+#endif
     int enc_secret_size = -1;
     int cke_size = -1;
     int premaster_secret_len = -1;
@@ -410,7 +410,7 @@ static int send_client_key_xchg(SSL *ssl)
     buf[0] = HS_CLIENT_KEY_XCHG;
     buf[1] = 0;
 
-    #ifndef CONFIG_SSL_NO_CERTS
+#ifndef CONFIG_SSL_NO_CERTS
     // spec says client must use the what is initially negotiated -
     // and this is our current version
     premaster_secret[0] = 0x03; 
@@ -432,7 +432,7 @@ static int send_client_key_xchg(SSL *ssl)
     buf[5] = enc_secret_size & 0xff;
     cke_size = enc_secret_size+6;
     premaster_secret_len = 48;
-    #else /* CONFIG_SSL_NO_CERTS */
+#else /* CONFIG_SSL_NO_CERTS */
     buf[2] = 0x00;
     buf[3] = 17; // two byte identity
     buf[4] = 0x00;
@@ -440,14 +440,13 @@ static int send_client_key_xchg(SSL *ssl)
     memcpy(&buf[6], "Client_identity", 15);
     cke_size = 21;
     premaster_secret[0] = 0x00;
-    premaster_secret[1] = 0x02; // N octets long PSK
-    premaster_secret[2] = 0x00;
-    premaster_secret[3] = 0x00;
-    premaster_secret[4] = 0x00;
-    premaster_secret[5] = 0x02; // N octets long PSK
-    premaster_secret[6] = 0x66;
-    premaster_secret[7] = 0x66; // hardcoded PSK
-    premaster_secret_len = 8;
+    premaster_secret[1] = ssl->ssl_ctx->preshared_key_len;
+    memset(&premaster_secret[2], 0x00, ssl->ssl_ctx->preshared_key_len);
+    premaster_secret[2+ssl->ssl_ctx->preshared_key_len] = 0x00;
+    premaster_secret[3+ssl->ssl_ctx->preshared_key_len] = ssl->ssl_ctx->preshared_key_len;
+    memcpy(&premaster_secret[4+ssl->ssl_ctx->preshared_key_len], ssl->ssl_ctx->preshared_key, ssl->ssl_ctx->preshared_key_len);
+    premaster_secret_len = 4+ssl->ssl_ctx->preshared_key_len*2;
+    //print_blob("pms", premaster_secret, premaster_secret_len);
     #endif
 
     generate_master_secret(ssl, premaster_secret, premaster_secret_len);

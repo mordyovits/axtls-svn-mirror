@@ -209,6 +209,8 @@ EXP_FUNC SSL_CTX *STDCALL ssl_ctx_new(uint32_t options, int num_sessions)
         free(ssl_ctx);  /* can't load our key/certificate pair, so die */
         return NULL;
     }
+#else /* CONFIG_SSL_NO_CERTS */
+    ssl_ctx->preshared_key_len = 0;
 #endif /* CONFIG_SSL_NO_CERTS */
     
 #ifndef CONFIG_SSL_SKELETON_MODE
@@ -701,6 +703,19 @@ int add_private_key(SSL_CTX *ssl_ctx, SSLObjLoader *ssl_obj)
 
 error:
     return ret;
+}
+#endif /* CONFIG_SSL_NO_CERTS */
+
+#ifdef CONFIG_SSL_NO_CERTS
+EXP_FUNC int STDCALL ssl_set_preshared_key(SSL_CTX *ssl_ctx, uint8_t *psk, uint8_t psk_len)
+{
+    if (psk_len > MAX_PSK_SIZE)
+    {
+        return SSL_NOT_OK;
+    }
+    memcpy(ssl_ctx->preshared_key, psk, psk_len);
+    ssl_ctx->preshared_key_len = psk_len;
+    return SSL_OK;
 }
 #endif /* CONFIG_SSL_NO_CERTS */
 

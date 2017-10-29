@@ -75,6 +75,7 @@ extern "C" {
 #define CLR_SSL_FLAG(A)             (ssl->flag &= ~A)
 #define IS_SET_SSL_FLAG(A)          (ssl->flag & A)
 
+#define MAX_PSK_SIZE                32      /* 256 bits */
 #define MAX_KEY_BYTE_SIZE           512     /* for a 4096 bit key */
 #define RT_MAX_PLAIN_LENGTH         16384
 #define RT_EXTRA                    1024
@@ -255,6 +256,11 @@ struct _SSL_CTX
 #ifdef CONFIG_OPENSSL_COMPATIBLE
     void *bonus_attr;
 #endif
+#ifdef CONFIG_SSL_NO_CERTS
+    uint8_t preshared_key[MAX_PSK_SIZE];
+    uint8_t preshared_key_len;
+    // MOXXX add identity, (ifdef configed for server only?)
+#endif /* CONFIG_SSL_NO_CERTS */
 };
 
 typedef struct _SSL_CTX SSL_CTX;

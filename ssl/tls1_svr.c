@@ -380,7 +380,11 @@ static int process_client_key_xchg(SSL *ssl)
     uint8_t *buf = &ssl->bm_data[ssl->dc->bm_proc_index];
     int pkt_size = ssl->bm_index;
     int premaster_size, secret_length = (buf[2] << 8) + buf[3];
+#ifndef CONFIG_SSL_NO_CERTS
     uint8_t premaster_secret[MAX_KEY_BYTE_SIZE];
+#else /* CONFIG_SSL_NO_CERTS */
+    uint8_t premaster_secret[4+MAX_PSK_SIZE*2];  // two uint16s + double the psk (first is zeros)
+#endif
     int offset = 4;
     int ret = SSL_OK;
 #ifndef CONFIG_SSL_NO_CERTS
@@ -418,14 +422,13 @@ static int process_client_key_xchg(SSL *ssl)
 #else /* CONFIG_SSL_NO_CERTS */
     /* MOXXX cke in psk cipher is the identity.  skip parsing it for now */
     premaster_secret[0] = 0x00;
-    premaster_secret[1] = 0x02; // N octets long PSK
-    premaster_secret[2] = 0x00;
-    premaster_secret[3] = 0x00;
-    premaster_secret[4] = 0x00;
-    premaster_secret[5] = 0x02; // N octets long PSK
-    premaster_secret[6] = 0x66;
-    premaster_secret[7] = 0x66; // hardcoded PSK
-    premaster_size = 8;
+    premaster_secret[1] = ssl->ssl_ctx->preshared_key_len;
+    memset(&premaster_secret[2], 0x00, ssl->ssl_ctx->preshared_key_len);
+    premaster_secret[2+ssl->ssl_ctx->preshared_key_len] = 0x00;
+    premaster_secret[3+ssl->ssl_ctx->preshared_key_len] = ssl->ssl_ctx->preshared_key_len;
+    memcpy(&premaster_secret[4+ssl->ssl_ctx->preshared_key_len], ssl->ssl_ctx->preshared_key, ssl->ssl_ctx->preshared_key_len);
+    // premaster_secret_len = 4+ssl->ssl_ctx->preshared_key_len*2;
+    premaster_size = 4+ssl->ssl_ctx->preshared_key_len*2;
 #endif /* CONFIG_SSL_NO_CERTS */
 
     generate_master_secret(ssl, premaster_secret, premaster_size);
