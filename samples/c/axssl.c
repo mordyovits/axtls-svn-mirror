@@ -181,8 +181,22 @@ static void do_server(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-psk") == 0)
         {
-            psk_len = strlen(argv[i+1]);
-            memcpy(psk, argv[++i], psk_len);
+            // make sure it's an even number of hex chrs
+            if (strlen(argv[i+1]) % 2 != 0)
+            {
+                fprintf(stderr, "Error: PSK is invalid\n");
+                exit(1);
+            }
+            psk_len = strlen(argv[i+1])/2;
+            /* convert from hex to binary - assumes uppercase hex */
+            for (int pski = 0; pski < psk_len; pski++)
+            {
+                char c = argv[i+1][pski*2] - '0';
+                psk[pski] = (c > 9 ? c + '0' - 'A' + 10 : c) << 4;
+                c = argv[i+1][pski*2+1] - '0';
+                psk[pski] += (c > 9 ? c + '0' - 'A' + 10 : c);
+            }
+            i++;
         }
 #endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-quiet") == 0)
