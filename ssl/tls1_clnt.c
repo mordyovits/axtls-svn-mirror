@@ -47,11 +47,13 @@ static const uint8_t g_sig_alg[] = {
                 SIG_ALG_SHA1, SIG_ALG_RSA 
 };
 
+#ifndef CONFIG_SSL_NO_CERTS
 static const uint8_t g_asn1_sha256[] = 
 { 
     0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 
     0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
 };
+#endif /* CONFIG_SSL_NO_CERTS */
 
 static int send_client_hello(SSL *ssl);
 static int process_server_hello(SSL *ssl);
@@ -400,10 +402,10 @@ static int send_client_key_xchg(SSL *ssl)
     uint8_t *buf = ssl->bm_data;
 #ifndef CONFIG_SSL_NO_CERTS
     uint8_t premaster_secret[SSL_SECRET_SIZE];
+    int enc_secret_size = -1;
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t premaster_secret[4+MAX_PSK_SIZE*2];  // two uint16s + double the psk (first is zeros)
 #endif
-    int enc_secret_size = -1;
     int cke_size = -1;
     int premaster_secret_len = -1;
 
