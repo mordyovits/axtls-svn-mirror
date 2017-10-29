@@ -446,19 +446,7 @@ static int send_client_key_xchg(SSL *ssl)
     premaster_secret[3+ssl->ssl_ctx->preshared_key_len] = ssl->ssl_ctx->preshared_key_len;
     memcpy(&premaster_secret[4+ssl->ssl_ctx->preshared_key_len], ssl->ssl_ctx->preshared_key, ssl->ssl_ctx->preshared_key_len);
     premaster_secret_len = 4+ssl->ssl_ctx->preshared_key_len*2;
-    print_blob("pms", premaster_secret, premaster_secret_len);
-    //premaster_secret[
-    /*
-    premaster_secret[0] = 0x00;
-    premaster_secret[1] = 0x02; // N octets long PSK
-    premaster_secret[2] = 0x00;
-    premaster_secret[3] = 0x00;
-    premaster_secret[4] = 0x00;
-    premaster_secret[5] = 0x02; // N octets long PSK
-    premaster_secret[6] = 0x66;
-    premaster_secret[7] = 0x66; // hardcoded PSK
-    premaster_secret_len = 8;
-    */
+    //print_blob("pms", premaster_secret, premaster_secret_len);
     #endif
 
     generate_master_secret(ssl, premaster_secret, premaster_secret_len);
