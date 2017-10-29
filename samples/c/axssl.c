@@ -110,6 +110,10 @@ static void do_server(int argc, char *argv[])
     int cert_index = 0;
     int cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
 #endif
+#ifdef CONFIG_SSL_NO_CERTS
+    uint8_t psk[MAX_PSK_SIZE];
+    uint8_t psk_len;
+#endif  /* CONFIG_SSL_NO_CERTS */
 #ifdef WIN32
     char yes = 1;
 #else
@@ -171,6 +175,12 @@ static void do_server(int argc, char *argv[])
             password = argv[++i];
         }
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+        else if (strcmp(argv[i], "-psk") == 0)
+        {
+            psk_len = strlen(argv[i+1]);
+            memcpy(psk, argv[++i], psk_len);
+        }
 #endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-quiet") == 0)
         {
@@ -267,6 +277,12 @@ static void do_server(int argc, char *argv[])
 #ifndef CONFIG_SSL_SKELETON_MODE
     free(cert);
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
+    {
+        printf("Failed to set preshared_key.\n");
+        exit(1);
+    }
 #endif /* CONFIG_SSL_NO_CERTS */
 
     /* Create socket for incoming connections */
@@ -822,6 +838,8 @@ static void print_server_options(char *option)
     printf(" -key arg\t- Private key file to use\n");
     printf(" -pass\t\t- private key file pass phrase source\n");
 #endif
+#else /* CONFIG_SSL_NO_CERTS */
+    printf(" -psk arg\t- Preshared key in capitals hexadecimal\n");
 #endif /* CONFIG_SSL_NO_CERTS */
     printf(" -quiet\t\t- No server output\n");
 #ifndef CONFIG_SSL_NO_CERTS
