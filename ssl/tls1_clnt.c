@@ -436,11 +436,12 @@ static int send_client_key_xchg(SSL *ssl)
     premaster_secret_len = 48;
 #else /* CONFIG_SSL_NO_CERTS */
     buf[2] = 0x00;
-    buf[3] = 17; // two byte identity
+    buf[3] = ssl->ssl_ctx->psk_identity_len + 2;
     buf[4] = 0x00;
-    buf[5] = 15;
-    memcpy(&buf[6], "Client_identity", 15);
-    cke_size = 21;
+    buf[5] = ssl->ssl_ctx->psk_identity_len;
+    memcpy(&buf[6], ssl->ssl_ctx->psk_identity, ssl->ssl_ctx->psk_identity_len);
+    cke_size = ssl->ssl_ctx->psk_identity_len + 6;
+
     premaster_secret[0] = 0x00;
     premaster_secret[1] = ssl->ssl_ctx->preshared_key_len;
     memset(&premaster_secret[2], 0x00, ssl->ssl_ctx->preshared_key_len);

@@ -489,6 +489,8 @@ static void do_client(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
     uint8_t psk_len = 0;
+    uint8_t psk_identity[MAX_PSK_IDENTITY_SIZE];
+    uint8_t psk_identity_len = 0;
 #endif  /* CONFIG_SSL_NO_CERTS */
     uint8_t session_id[SSL_SESSION_ID_SIZE];
     fd_set read_set;
@@ -593,6 +595,11 @@ static void do_client(int argc, char *argv[])
             }
             i++;
         }
+        else if (strcmp(argv[i], "-psk_identity") == 0)
+        {
+            psk_identity_len = strlen(argv[i+1]);
+            memcpy(psk_identity, argv[++i], psk_identity_len);
+        }
 #endif /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-reconnect") == 0)
         {
@@ -681,6 +688,11 @@ static void do_client(int argc, char *argv[])
     free(cert);
     free(ca_cert);
 #else
+    if (ssl_set_psk_identity(ssl_ctx, psk_identity, psk_identity_len))
+    {
+        printf("Failed to set psk_identity.\n");
+        exit(1);
+    }
     if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
     {
         printf("Failed to set preshared_key.\n");
@@ -922,6 +934,7 @@ static void print_client_options(char *option)
     printf("\t\t  Can repeat up to %d times\n", ca_cert_size);
 #else /* CONFIG_SSL_NO_CERTS */
     printf(" -psk arg\t- Preshared key in capitals hexadecimal\n");
+    printf(" -psk_identity arg\t- Preshared key identity\n");
 #endif /* CONFIG_SSL_NO_CERTS */
     printf(" -quiet\t\t- No client output\n");
     printf(" -reconnect\t- Drop and re-make the connection "

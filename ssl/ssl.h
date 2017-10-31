@@ -333,6 +333,8 @@ EXP_FUNC int STDCALL ssl_write(SSL *ssl, const uint8_t *out_data, int out_len);
 EXP_FUNC SSL * STDCALL ssl_find(SSL_CTX *ssl_ctx, int client_fd);
 
 EXP_FUNC int STDCALL ssl_set_preshared_key(SSL_CTX *ssl_ctx, uint8_t *psk, uint8_t psk_len);
+EXP_FUNC int STDCALL ssl_set_psk_identity(SSL_CTX *ssl_ctx, uint8_t *psk_identity,
+        uint8_t psk_identity_len);
 
 /**
  * @brief Get the session id for a handshake. 

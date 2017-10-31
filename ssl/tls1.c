@@ -717,6 +717,18 @@ EXP_FUNC int STDCALL ssl_set_preshared_key(SSL_CTX *ssl_ctx, uint8_t *psk, uint8
     ssl_ctx->preshared_key_len = psk_len;
     return SSL_OK;
 }
+
+EXP_FUNC int STDCALL ssl_set_psk_identity(SSL_CTX *ssl_ctx, uint8_t *psk_identity,
+        uint8_t psk_identity_len)
+{
+    if (psk_identity_len > MAX_PSK_IDENTITY_SIZE)
+    {
+        return SSL_NOT_OK;
+    }
+    memcpy(ssl_ctx->psk_identity, psk_identity, psk_identity_len);
+    ssl_ctx->psk_identity_len = psk_identity_len;
+    return SSL_OK;
+}
 #endif /* CONFIG_SSL_NO_CERTS */
 
 /** 
