@@ -1998,7 +1998,7 @@ EXP_FUNC int STDCALL ssl_get_config(int offset)
 #else 
             return SSL_BUILD_SKELETON_MODE;
 #endif
-
+#ifndef CONFIG_SSL_NO_CERTS
         case SSL_MAX_CERT_CFG_OFFSET:
             return CONFIG_SSL_MAX_CERTS;
 
@@ -2006,6 +2006,7 @@ EXP_FUNC int STDCALL ssl_get_config(int offset)
         case SSL_MAX_CA_CERT_CFG_OFFSET:
             return CONFIG_X509_MAX_CA_CERTS;
 #endif
+#endif /* CONFIG_SSL_NO_CERTS */
 #ifdef CONFIG_SSL_HAS_PEM
         case SSL_HAS_PEM:
             return 1;

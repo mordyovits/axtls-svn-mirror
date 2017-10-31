@@ -239,13 +239,13 @@ struct _SSL_CTX
 #ifndef CONFIG_SSL_NO_CERTS
     uint8_t chain_length;
     RSA_CTX *rsa_ctx;
+    SSL_CERT certs[CONFIG_SSL_MAX_CERTS];
 #ifdef CONFIG_SSL_CERT_VERIFICATION
     CA_CERT_CTX *ca_cert_ctx;
 #endif
 #endif /* CONFIG_SSL_NO_CERTS */
     SSL *head;
     SSL *tail;
-    SSL_CERT certs[CONFIG_SSL_MAX_CERTS];
 #ifndef CONFIG_SSL_SKELETON_MODE
     uint16_t num_sessions;
     SSL_SESSION **ssl_sessions;

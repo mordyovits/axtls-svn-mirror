@@ -79,9 +79,17 @@ config CONFIG_SSL_SKELETON_MODE
 
 endchoice
 
+config CONFIG_SSL_NO_CERTS
+    bool "Disable SSL Certificates (Use only PSK)"
+    default n
+    help
+        Turns off all support for X.509 certificates. No common RSA
+        ciphers will work.  This causes the PSK ciphersuites to be
+        enabled.  This options creates a very tiny library.
+
 choice
-    prompt "Protocol Preference"
-    depends on !CONFIG_SSL_SKELETON_MODE
+    prompt "Cipher Order Preference (for RSA ciphers)"
+    depends on !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     default CONFIG_SSL_PROT_MEDIUM
 
 config CONFIG_SSL_PROT_LOW
@@ -112,7 +120,7 @@ endchoice
 
 config CONFIG_SSL_USE_DEFAULT_KEY
     bool "Enable default key"
-    depends on !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     default y 
     help
         Some applications will not require the default private key/certificate
@@ -134,7 +142,7 @@ config CONFIG_SSL_USE_DEFAULT_KEY
 
 config CONFIG_SSL_PRIVATE_KEY_LOCATION
     string "Private key file location"
-    depends on !CONFIG_SSL_USE_DEFAULT_KEY && !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_USE_DEFAULT_KEY && !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     help
         The file location of the private key which will be automatically
         loaded on a ssl_ctx_new().
@@ -147,13 +155,14 @@ config CONFIG_SSL_PRIVATE_KEY_PASSWORD
 
 config CONFIG_SSL_X509_CERT_LOCATION
     string "X.509 certificate file location"
-    depends on !CONFIG_SSL_GENERATE_X509_CERT && !CONFIG_SSL_USE_DEFAULT_KEY && !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_GENERATE_X509_CERT && !CONFIG_SSL_USE_DEFAULT_KEY && !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     help
         The file location of the X.509 certificate which will be automatically
         loaded on a ssl_ctx_new().
 
 config CONFIG_SSL_GENERATE_X509_CERT
     bool "Generate X.509 Certificate"
+    depends on !CONFIG_SSL_NO_CERTS
     default n
     help
         An X.509 certificate can be automatically generated on a
@@ -169,7 +178,7 @@ config CONFIG_SSL_GENERATE_X509_CERT
 
 config CONFIG_SSL_X509_COMMON_NAME
     string "X.509 Common Name"
-    depends on CONFIG_SSL_GENERATE_X509_CERT
+    depends on CONFIG_SSL_GENERATE_X509_CERT && !CONFIG_SSL_NO_CERTS
     help
         The common name for the X.509 certificate. This should be the fully 
         qualified domain name (FQDN), e.g. www.foo.com.
@@ -179,7 +188,7 @@ config CONFIG_SSL_X509_COMMON_NAME
 
 config CONFIG_SSL_X509_ORGANIZATION_NAME
     string "X.509 Organization Name"
-    depends on CONFIG_SSL_GENERATE_X509_CERT
+    depends on CONFIG_SSL_GENERATE_X509_CERT && !CONFIG_SSL_NO_CERTS
     help
         The organization name for the generated X.509 certificate. 
 
@@ -187,7 +196,7 @@ config CONFIG_SSL_X509_ORGANIZATION_NAME
 
 config CONFIG_SSL_X509_ORGANIZATION_UNIT_NAME
     string "X.509 Organization Unit Name"
-    depends on CONFIG_SSL_GENERATE_X509_CERT
+    depends on CONFIG_SSL_GENERATE_X509_CERT && !CONFIG_SSL_NO_CERTS
     help
         The organization unit name for the generated X.509 certificate. 
 
@@ -197,7 +206,7 @@ config CONFIG_SSL_HAS_PEM
     bool "Enable PEM"
     default n if !CONFIG_SSL_FULL_MODE
     default y if CONFIG_SSL_FULL_MODE
-    depends on !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     help
         Enable the use of PEM format for certificates and private keys.
 
@@ -213,7 +222,7 @@ config CONFIG_SSL_USE_PKCS12
     bool "Use PKCS8/PKCS12"
     default n if !CONFIG_SSL_FULL_MODE
     default y if CONFIG_SSL_FULL_MODE
-    depends on !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     help
         PKCS#12 certificates combine private keys and certificates together in
         one file.
@@ -241,7 +250,7 @@ config CONFIG_SSL_EXPIRY_TIME
 config CONFIG_X509_MAX_CA_CERTS
     int "Maximum number of certificate authorites"
     default 150
-    depends on !CONFIG_SSL_SERVER_ONLY && !CONFIG_SSL_SKELETON_MODE
+    depends on !CONFIG_SSL_SERVER_ONLY && !CONFIG_SSL_SKELETON_MODE && !CONFIG_SSL_NO_CERTS
     help
         Determines the number of CA's allowed. 
 
@@ -252,6 +261,7 @@ config CONFIG_X509_MAX_CA_CERTS
 
 config CONFIG_SSL_MAX_CERTS
     int "Maximum number of chained certificates"
+    depends on !CONFIG_SSL_NO_CERTS
     default 3
     help
         Determines the number of certificates used in a certificate
