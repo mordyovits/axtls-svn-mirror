@@ -295,7 +295,7 @@ static void do_server(int argc, char *argv[])
     free(cert);
 #endif
 #else /* CONFIG_SSL_NO_CERTS */
-    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
+    if (psk_len == 0 || ssl_set_preshared_key(ssl_ctx, psk, psk_len))
     {
         printf("Failed to set preshared_key.\n");
         exit(1);
@@ -688,12 +688,12 @@ static void do_client(int argc, char *argv[])
     free(cert);
     free(ca_cert);
 #else
-    if (ssl_set_psk_identity(ssl_ctx, psk_identity, psk_identity_len))
+    if (psk_identity_len == 0 || ssl_set_psk_identity(ssl_ctx, psk_identity, psk_identity_len))
     {
         printf("Failed to set psk_identity.\n");
         exit(1);
     }
-    if (ssl_set_preshared_key(ssl_ctx, psk, psk_len))
+    if (psk_len == 0 || ssl_set_preshared_key(ssl_ctx, psk, psk_len))
     {
         printf("Failed to set preshared_key.\n");
         exit(1);
