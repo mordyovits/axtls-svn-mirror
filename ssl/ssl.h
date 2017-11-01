@@ -332,7 +332,30 @@ EXP_FUNC int STDCALL ssl_write(SSL *ssl, const uint8_t *out_data, int out_len);
  */
 EXP_FUNC SSL * STDCALL ssl_find(SSL_CTX *ssl_ctx, int client_fd);
 
+
+/**
+ * @brief Set the preshared key for a handshake.
+ *
+ * The preshared key is a byte sequence up to MAX_PSK_SIZE in length.
+ * @param ssl_ctx [in] The client/server context.
+ * @param psk [in] The preshared key.
+ * @param psk_len [in] The length of the preshared key.
+ * @return SSL_OK if the preshared key was set.
+ * @note Only available if CONFIG_SSL_NO_CERTS is set.
+ */
 EXP_FUNC int STDCALL ssl_set_preshared_key(SSL_CTX *ssl_ctx, uint8_t *psk, uint8_t psk_len);
+
+/**
+ * @brief Set the preshared key client identity for a handshake.
+ *
+ * The psk identity is a byte sequence up to MAX_PSK_IDENTITY_SIZE in length.
+ * Only the TLS-PSK client sets & sends an identity.
+ * @param ssl_ctx [in] The client context.
+ * @param psk_identity [in] The identity.
+ * @param psk_identity_len [in] The length of the identity.
+ * @return SSL_OK if the preshared key was set.
+ * @note Only available if CONFIG_SSL_NO_CERTS is set.
+ */
 EXP_FUNC int STDCALL ssl_set_psk_identity(SSL_CTX *ssl_ctx, uint8_t *psk_identity,
         uint8_t psk_identity_len);
 
