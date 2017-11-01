@@ -114,6 +114,7 @@ static void do_server(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
     uint8_t psk_len = 0;
+    int pski;
 #endif  /* CONFIG_SSL_NO_CERTS */
 #ifdef WIN32
     char yes = 1;
@@ -193,7 +194,7 @@ static void do_server(int argc, char *argv[])
             }
             psk_len = strlen(argv[i+1])/2;
             /* convert from hex to binary - assumes uppercase hex */
-            for (int pski = 0; pski < psk_len; pski++)
+            for (pski = 0; pski < psk_len; pski++)
             {
                 char c = argv[i+1][pski*2] - '0';
                 psk[pski] = (c > 9 ? c + '0' - 'A' + 10 : c) << 4;
@@ -493,6 +494,7 @@ static void do_client(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
     uint8_t psk[MAX_PSK_SIZE];
     uint8_t psk_len = 0;
+    int pki;
     uint8_t psk_identity[MAX_PSK_IDENTITY_SIZE];
     uint8_t psk_identity_len = 0;
 #endif  /* CONFIG_SSL_NO_CERTS */
@@ -594,7 +596,7 @@ static void do_client(int argc, char *argv[])
             }
             psk_len = strlen(argv[i+1])/2;
             /* convert from hex to binary - assumes uppercase hex */
-            for (int pski = 0; pski < psk_len; pski++)
+            for (pski = 0; pski < psk_len; pski++)
             {
                 char c = argv[i+1][pski*2] - '0';
                 psk[pski] = (c > 9 ? c + '0' - 'A' + 10 : c) << 4;
