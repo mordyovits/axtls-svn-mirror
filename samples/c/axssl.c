@@ -181,6 +181,10 @@ static void do_server(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-psk") == 0)
         {
+            if (i >= argc-1)
+            {
+                print_server_options(argv[i]);
+            }
             // make sure it's an even number of hex chrs
             if (strlen(argv[i+1]) % 2 != 0)
             {
@@ -578,6 +582,10 @@ static void do_client(int argc, char *argv[])
 #else /* CONFIG_SSL_NO_CERTS */
         else if (strcmp(argv[i], "-psk") == 0)
         {
+            if (i >= argc-1)
+            {
+                print_client_options(argv[i]);
+            }
             // make sure it's an even number of hex chrs
             if (strlen(argv[i+1]) % 2 != 0)
             {
@@ -597,6 +605,10 @@ static void do_client(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "-psk_identity") == 0)
         {
+            if (i >= argc-1)
+            {
+                print_client_options(argv[i]);
+            }
             psk_identity_len = strlen(argv[i+1]);
             memcpy(psk_identity, argv[++i], psk_identity_len);
         }
