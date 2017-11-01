@@ -80,7 +80,7 @@ config CONFIG_SSL_SKELETON_MODE
 endchoice
 
 config CONFIG_SSL_NO_CERTS
-    bool "Disable SSL Certificates (Use only PSK)"
+    bool "Disable SSL Certificates (use only PSK)"
     default n
     help
         Turns off all support for X.509 certificates. No common RSA
